@@ -54,7 +54,7 @@ function Index() {
   }
 
   return (
-    <div className={`flex h-screen transition-all duration-300 ${darkMode ? "dark:bg-slate-800" : ""}`}>
+    <div className={`flex h-screen transition-all duration-300 ${darkMode ? "dark:bg-slate-800" : "bg-gray-100"}`}>
       <Sidebar isOpen={isOpen} toggleSidebar={toggleSidebar} setSelectedOption={setSelectedOption} selectedOption={selectedOption} darkMode={darkMode} />
       <div className={`flex-1 transition-all duration-300 ${isOpen ? "md:ml-64" : "ml-20"} flex flex-col h-full overflow-hidden `}>
         <Navbar title={optionTitles[selectedOption]} darkMode={darkMode} setDarkMode={setDarkMode} isOpen={isOpen} />

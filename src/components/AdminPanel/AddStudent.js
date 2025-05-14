@@ -1,4 +1,3 @@
-"use client";
 import React, { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import axios from "axios";
@@ -10,31 +9,45 @@ function AddStudent({ darkMode }) {
     register,
     handleSubmit,
     control,
-    reset, // Add this line
+    reset,
     formState: { errors },
   } = useForm();
 
+  const [supervisors, setSupervisors] = useState([]);
   const [formKey, setFormKey] = useState(0);
   const router = useRouter();
   const [buttonDisabled, setButtonDisabled] = useState(true);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  // Fetch supervisors on component mount
+  useEffect(() => {
+    const fetchSupervisors = async () => {
+      try {
+        const response = await axios.get("/api/FetchRecords/GetSupervisorDropdown");
+        setSupervisors(response.data);
+      } catch (error) {
+        console.error("Failed to fetch supervisors", error);
+      }
+    };
+
+    fetchSupervisors();
+  }, []);
+
   // Watch form values
   const watchedValues = useWatch({ control });
 
   const onSubmit = async (data) => {
-    setLoading(true); // Ensure loading is set at the beginning
+    setLoading(true);
     try {
-      const studentData = { ...data, role: "Student" }; // Automatically setting role as "Student"
+      const studentData = { ...data, role: "student" };
       const response = await axios.post("/api/users/signup", studentData);
       console.log(response.data);
 
       toast.success("Student Added Successfully!");
 
-      // Reset the form fields
       reset();
-      setFormKey((prevKey) => prevKey + 1); //  Update key to force re-render
+      setFormKey((prevKey) => prevKey + 1);
     } catch (error) {
       console.error(error.response?.data || error.message);
       toast.error("Failed to Add Student");
@@ -44,9 +57,24 @@ function AddStudent({ darkMode }) {
   };
 
   useEffect(() => {
-    const { email, password, name, department, rollNumber } =
-      watchedValues || {};
-    if (email && password && name && department && rollNumber) {
+    const {
+      email,
+      password,
+      name,
+      department,
+      rollNumber,
+      projectTitle,
+      supervisor,
+    } = watchedValues || {};
+    if (
+      email &&
+      password &&
+      name &&
+      department &&
+      rollNumber &&
+      projectTitle &&
+      supervisor
+    ) {
       setButtonDisabled(false);
     } else {
       setButtonDisabled(true);
@@ -59,27 +87,17 @@ function AddStudent({ darkMode }) {
         darkMode ? "dark" : ""
       }`}
     >
-      <div className="w-full max-w-md  dark:bg-slate-800 border-2 border-[#0069D9] dark:border-white rounded-md shadow-2xl p-6 overflow-auto max-h-[85vh]">
-        {/* Small Lottie Animation */}
-        <div className="flex items-center justify-center space-x-2 mb-4 ">
+      <div className="w-full max-w-md text-black dark:bg-slate-800 border-2 border-[#0069D9] dark:border-white rounded-md shadow-2xl p-6 overflow-auto max-h-[85vh]">
+        <div className="flex items-center justify-center space-x-2 mb-2 ">
           <img
             src="/user.gif"
             alt="Loading Animation"
             className="w-[70px] h-[70px] opacity-0 animate-fade-in"
           />
-
-          {/* <iframe src="https://lottie.host/embed/4c8a2ba7-a721-4f1e-99d0-c4a00adb8cae/AK1PAssf5p.lottie"
-       
-            className="w-[55px] h-[55px] opacity-0 animate-fade-in"
-       ></iframe> */}
-          {/* <iframe
-            src="https://lottie.host/embed/4522365f-b57d-4f80-8093-7f21c0dbe8fe/QdqqQ6Ub3C.lottie"
-          ></iframe> */}
-          <h1 className="text-center text-[#0069D9] dark:text-white  font-extrabold text-lg ">
+          <h1 className="text-center text-[#0069D9] dark:text-white font-extrabold text-lg">
             ADD STUDENT
           </h1>
         </div>
-        {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Name Input */}
           <div>
@@ -93,7 +111,7 @@ function AddStudent({ darkMode }) {
                 },
               })}
               type="text"
-              className="leading-tight border-2 border-[#0069D9] rounded w-full py-1.5 px-3 dark:bg-slate-800 dark:text-white dark:border-white"
+              className="leading-tight border-2  border-[#0069D9] rounded w-full py-1.5 px-3 dark:bg-slate-800 dark:text-white dark:border-white"
               placeholder="Name"
             />
             {errors.name && (
@@ -135,7 +153,7 @@ function AddStudent({ darkMode }) {
                 placeholder="Password"
               />
               <span
-                className="absolute right-3 top-2.5 cursor-pointer  text-[#0069D9] dark:text-white text-xs font-black italic py-1 leading-tight"
+                className="absolute right-3 top-2.5 cursor-pointer text-[#0069D9] dark:text-white text-xs font-black italic py-1 leading-tight"
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? "HIDE" : "SHOW"}
@@ -167,6 +185,50 @@ function AddStudent({ darkMode }) {
               </p>
             )}
           </div>
+          <div className="flex gap-2">
+            {/* Project Title */}
+            <div className="flex-1">
+              <input
+                {...register("projectTitle", {
+                  required: "Project Title is required",
+                  minLength: {
+                    value: 5,
+                    message: "Title must be at least 5 characters",
+                  },
+                })}
+                type="text"
+                className="leading-tight border-2 border-[#0069D9] rounded py-1.5 px-3 dark:bg-slate-800 dark:text-white dark:border-white w-full"
+                placeholder="Project Title"
+              />
+              {errors.projectTitle && (
+                <p className="text-red-500 text-sm">
+                  {errors.projectTitle.message}
+                </p>
+              )}
+            </div>
+
+            {/* Supervisor Dropdown */}
+            <div className="flex-1">
+              <select
+                {...register("supervisor", {
+                  required: "Supervisor is required",
+                })}
+                className="leading-tight border-2 text-slate-500 border-[#0069D9] rounded w-full py-1.5 px-3 dark:bg-slate-800 dark:text-white dark:border-white"
+              >
+                <option value="">Select Supervisor</option>
+                {supervisors.map((supervisor) => (
+                  <option key={supervisor._id} value={supervisor._id}>
+                    {supervisor.name}
+                  </option>
+                ))}
+              </select>
+              {errors.supervisor && (
+                <p className="text-red-500 text-sm">
+                  {errors.supervisor.message}
+                </p>
+              )}
+            </div>
+          </div>
 
           {/* Department Select */}
           <div>
@@ -175,7 +237,7 @@ function AddStudent({ darkMode }) {
             </label>
             <select
               {...register("department", { required: true })}
-              className="leading-tight border-2 border-[#0069D9] rounded w-full py-1.5 px-3 dark:bg-slate-800 dark:text-white dark:border-white"
+              className="leading-tight border-2 text-slate-500 border-[#0069D9] rounded w-full py-1.5 px-3 dark:bg-slate-800 dark:text-white dark:border-white"
             >
               <option value="">Select Department</option>
               <option value="Computer Science">Computer Science</option>
@@ -212,7 +274,7 @@ function AddStudent({ darkMode }) {
       </div>
       <div className="absolute bottom-4 right-4 opacity-0 animate-fade-in">
         <iframe
-          src="https://lottie.host/embed/45057d1b-7eda-4753-875f-0baeda2a9ff6/pXyptKGWgV.lottie"
+          src="https://lottie.host/embed//pXyptKGWgV.lottie"
           className="w-20 h-20"
         ></iframe>
       </div>

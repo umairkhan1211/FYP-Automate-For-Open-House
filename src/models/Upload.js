@@ -15,14 +15,6 @@ const uploadSchema = new mongoose.Schema({
       type: String,
       default: null, // Default to null if no FYP document is uploaded
     },
-    projectTitle: {
-      type: String,
-      default: null, // Default to null if no project title is provided
-    },
-    groupMembers: [{
-      name: { type: String, default: null },
-      rollNumber: { type: String, default: null }
-    }],
   },
   video: {
     videoUrl: {

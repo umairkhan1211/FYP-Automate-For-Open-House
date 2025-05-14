@@ -36,24 +36,45 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: "Failed to update user" });
     }
   } 
+
+  
   
   else if (req.method === "GET") {
     try {
-        let filter = {}; // Initialize filter object
-
-        if (role) {
-            filter.role = role; // Apply role filter if provided
-        }
-        if (department && department !== "All") { // Ensure "All" does not filter
-            filter.department = department; // Apply department filter
-        }
-
-        const users = await User.find(filter); // Fetch users based on filters
-        return res.status(200).json(users);
+      let filter = {};
+  
+      if (role) {
+        filter.role = role;
+      }
+      if (department && department !== "All") {
+        filter.department = department;
+      }
+  
+      let users = await User.find(filter);
+  
+      // ✅ If role is student, populate supervisor's name from User collection
+      if (role === "student") {
+        const supervisorMap = {};
+        const supervisorIds = users
+          .map((u) => u.supervisor)
+          .filter((id) => id); // Get supervisor IDs
+  
+        const supervisors = await User.find({ _id: { $in: supervisorIds } });
+  
+        supervisors.forEach((sup) => {
+          supervisorMap[sup._id.toString()] = sup.name;
+        });
+  
+        users = users.map((u) => ({
+          ...u._doc,
+          supervisor: supervisorMap[u.supervisor?.toString()] || "N/A",
+        }));
+      }
+  
+      return res.status(200).json(users);
     } catch (error) {
-        console.error(`Error fetching records:`, error);
-        return res.status(500).json({ error: `Failed to fetch records` });
+      console.error(`Error fetching records:`, error);
+      return res.status(500).json({ error: `Failed to fetch records` });
     }
-}
-
+  }
 }

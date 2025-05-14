@@ -1,243 +1,303 @@
 import Link from "next/link";
+import Image from "next/image";
 import React, { useState } from "react";
+import axios from "axios";
 
-export default function VideoPreview() {
+export default function VideoPreview({
+  studentId,
+  rollNumber,
+  supervisorId,
+  supervisorRole,
+  projectTitle,
+  videoUrl,
+  bannerImage,
+}) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [reason, setReason] = useState("");
+  const [rejectionType, setRejectionType] = useState(""); // "Video" or "Banner Image"
+  const [videoPath, setvideoPath] = useState(videoUrl);
+  const [bannerPath, setbannerPath] = useState(bannerImage);
 
-  const handleRejectClick = () => {
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  try {
+    // 1. Send rejection notification
+    await axios.post("/api/Notification/FYPNotification", {
+      studentId,
+      rollNumber,
+      supervisorId,
+      userRole: supervisorRole,
+      type: rejectionType, // "Video" or "Banner Image"
+      optionalMessage: reason,
+    });
+
+    // 2. Remove respective media path
+    if (rejectionType === "Video") {
+      await axios.put("/api/SupervisorDelete/RemoveVideoUrl", {
+        studentId,
+      });
+        setvideoPath(null);
+    } else if (rejectionType === "Banner Image") {
+      await axios.put("/api/SupervisorDelete/RemoveBannerImage", {
+        studentId,
+      });
+        setbannerPath(null);
+    }
+
+    console.log("Notification sent and media path removed successfully");
+    window.location.reload();
+  } catch (error) {
+    console.error("Error submitting rejection:", error);
+  }
+
+  setIsModalOpen(false);
+  setReason("");
+};
+
+
+  const handleRejectClick = (type) => {
+    setRejectionType(type);
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
+    setReason("");
+    setRejectionType("");
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Rejection Reason:", reason);
-    
-    setIsModalOpen(false);
+  const handleDownload = () => {
+    const imagePath = bannerImage.replace(/^public\//, "");
+    const downloadUrl = `/api/FetchRecords/GetBannerdownload?imagePath=${encodeURIComponent(
+      imagePath
+    )}`;
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+    link.click();
   };
 
-
-  const videoUrl = "https://www.youtube.com/watch?v=example";
-  const thumbnailUrl = "https://via.placeholder.com/150"; 
+  const getVideoId = (url) => {
+    const videoIdMatch = url.match(
+      /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|(?:.*[?&]v=))|youtu\.be\/)([A-Za-z0-9_-]{11})/
+    );
+    return videoIdMatch ? videoIdMatch[1] : null;
+  };
 
   return (
-    <div className="p-3">
-      <div className="my-2 space-x-2 mx-44">
+    <div className="p-4 pb-24">
+      <div className="max-w-2xl mx-auto p-4">
         <Link href="/supervisorportal/Review">
-          <button
-            className={
-              "border-2 rounded-lg text-md font-semibold py-1 px-4 border-[#0069D9] text-[#0069D9] bg-white hover:bg-[#0069D9] hover:text-white hover:border-[#0069D9]"
-            }
-          >
+          <button className="border-2 rounded-lg text-md font-semibold py-1 px-4 border-[#0069D9] text-[#0069D9] bg-white hover:bg-[#0069D9] hover:text-white hover:border-[#0069D9]">
             Back
           </button>
         </Link>
-      </div>
-      <div className="max-w-2xl mx-auto space-y-6">
-        {/* Demo Video Section */}
-        <div>
-          <div className="p-6 bg-white  border-2 border-[#0069D9] rounded">
-            <h2 className="text-lg font-semibold mb-4">Demo Video</h2>
-            <label className="block font-semibold mb-2">Video URL:</label>
-            <a
-              href={videoUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-500 hover:underline"
-            >
-              {videoUrl}
-            </a>
+
+        <h3 className="text-lg font-extrabold text-[#0069D9] text-center">
+          Video Preview
+        </h3>
+
+        <div className="space-y-4 mt-4">
+          {/* Video Section */}
+          <div className="p-1">
+            <div className="border-2 border-[#0069D9] p-6 rounded-lg">
+              <label className="block font-bold mb-2 text-[#0069D9] text-base">
+                Demo Video
+              </label>
+              {videoUrl && getVideoId(videoUrl) ? (
+                <div className="space-y-2">
+                  <div className="p-2">
+                    <iframe
+                      width="100%"
+                      height="280"
+                      src={`https://www.youtube.com/embed/${getVideoId(videoUrl)}`}
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    ></iframe>
+                  </div>
+                  <a
+                    href={videoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:underline"
+                  >
+                    Watch on YouTube
+                  </a>
+                </div>
+              ) : (
+                <p className="text-red-500 text-center">
+                  Video URL is not uploaded.
+                </p>
+              )}
+            </div>
+
+            {/* Review Buttons */}
+            {videoUrl && getVideoId(videoUrl) ? (
+            <div className="flex justify-end pt-4 space-x-4">
+              <button
+                className="bg-green-500 text-white p-3 rounded-full hover:bg-green-600"
+                title="Approve"
+              >
+                 <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </button>
+              <button
+                onClick={() => handleRejectClick("Video")}
+                className="bg-red-500 text-white p-3 rounded-full hover:bg-red-600"
+                title="Reject"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>):("")}
           </div>
-          <div className="flex justify-end pt-4 max-w-2xl mx-auto">
-            <button className="bg-white text-white px-2 rounded disabled:opacity-50">
-              <svg
-                fill="#16ac34"
-                version="1.1"
-                id="Capa_1"
-                xmlns="http://www.w3.org/2000/svg"
-                xmlnsXlink="http://www.w3.org/1999/xlink"
-                className="w-[32] h-[32] hover:border-2 rounded hover:rounded hover:border-white"
-                viewBox="0 0 567.12 567.12"
-                xmlSpace="preserve"
-                stroke="#16ac34"
-                strokeWidth="20.983551000000002"
+
+          {/* Banner Image Section */}
+          <div className="p-1">
+            <div className="border-2 border-[#0069D9] p-6 rounded-lg">
+              <label className="block font-bold text-[#0069D9] text-base mb-2">
+                Banner Image
+              </label>
+              {bannerImage ? (
+                <div>
+                  <Image
+                    src={`/${bannerImage.replace(/^public\//, "")}`}
+                    width={200}
+                    height={200}
+                    alt="Banner Image"
+                    className="shadow-md rounded"
+                  />
+                </div>
+              ) : (
+                <p className="text-red-500 text-center">
+                  Banner image is not uploaded.
+                </p>
+              )}
+
+              {bannerImage && (
+                <button
+                  onClick={handleDownload}
+                  className="mt-2 bg-green-500 text-white px-4 py-2 rounded"
+                >
+                  Download
+                </button>
+              )}
+            </div>
+
+            {/* Review Buttons */}
+               {bannerImage && (
+            <div className="flex justify-end pt-4 space-x-4">
+              <button
+                className="bg-green-500 text-white p-3 rounded-full hover:bg-green-600"
+                title="Approve"
               >
-                <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
-                <g
-                  id="SVGRepo_tracerCarrier"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                ></g>
-                <g id="SVGRepo_iconCarrier">
-                  <g>
-                    <g>
-                      <path d="M0,567.119h567.123V0.004H0V567.119z M56.818,283.477l43.556-43.568c5.404-5.404,11.812-8.109,19.217-8.109 c7.399,0,13.807,2.705,19.217,8.109l90.092,90.105l199.408-199.409c5.404-5.404,11.811-8.121,19.217-8.121 c7.398,0,13.807,2.717,19.217,8.121l43.557,43.55c5.402,5.422,8.113,11.824,8.113,19.217c0,7.405-2.711,13.813-8.113,19.217 L248.117,474.764c-5.41,5.422-11.818,8.121-19.217,8.121c-7.405,0-13.813-2.705-19.217-8.121L56.818,321.91 c-5.41-5.404-8.115-11.812-8.115-19.217C48.703,295.287,51.402,288.881,56.818,283.477z"></path>
-                    </g>
-                  </g>
-                </g>
-              </svg>
-            </button>
-            <button
-              className="bg-white text-white rounded-full disabled:opacity-50"
-              onClick={handleRejectClick}
-            >
-              <svg
-                className="w-[43] h-[43] hover:border-2 fill-current hover:rounded-full hover:border-white"
-                viewBox="0 0 512 512"
-                version="1.1"
-                xmlSpace="preserve"
-                xmlns="http://www.w3.org/2000/svg"
-                xmlnsXlink="http://www.w3.org/1999/xlink"
+               <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </button>
+              <button
+                onClick={() => handleRejectClick("Banner Image")}
+                className="bg-red-500 text-white p-3 rounded-full hover:bg-red-600"
+                title="Reject"
               >
-                <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
-                <g
-                  id="SVGRepo_tracerCarrier"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                ></g>
-                <g id="SVGRepo_iconCarrier">
-                  <style type="text/css">
-                    {`
-                  .st0{fill:#f40101;}
-                  .st1{fill:none;stroke:#f40101;stroke-width:32;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;}
-                `}
-                  </style>
-                  <g id="Layer_1"></g>
-                  <g id="Layer_2">
-                    <g>
-                      <path
-                        className="st0"
-                        d="M263.24,43.5c-117.36,0-212.5,95.14-212.5,212.5s95.14,212.5,212.5,212.5s212.5-95.14,212.5-212.5 S380.6,43.5,263.24,43.5z M367.83,298.36c17.18,17.18,17.18,45.04,0,62.23v0c-17.18,17.18-45.04,17.18-62.23,0l-42.36-42.36 l-42.36,42.36c-17.18,17.18-45.04,17.18-62.23,0v0c-17.18-17.18-17.18-45.04,0-62.23L201.01,256l-42.36-42.36 c-17.18-17.18-17.18-45.04,0-62.23v0c17.18-17.18,45.04-17.18,62.23,0l42.36,42.36l42.36-42.36c17.18-17.18,45.04-17.18,62.23,0v0 c17.18,17.18,17.18,45.04,0,62.23L325.46,256L367.83,298.36z"
-                      ></path>
-                    </g>
-                  </g>
-                </g>
-              </svg>
-            </button>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>)}
           </div>
         </div>
-
-        {/* Banner Image Section */}
-        <div className="p-6 bg-white  border-2 border-[#0069D9] rounded">
-          <h2 className="text-lg font-semibold mb-4">Banner Image</h2>
-          <label className="block font-semibold mb-2">Thumbnail:</label>
-          <img
-            src={thumbnailUrl}
-            alt="Thumbnail"
-            className="w-[150px] h-[150px] rounded"
-          />
-        </div>
       </div>
 
-      {/* Back Button */}
-      <div className="flex justify-end pt-4 max-w-2xl mx-auto">
-        <button className="bg-white text-white px-2 rounded disabled:opacity-50">
-          <svg
-            fill="#16ac34"
-            version="1.1"
-            id="Capa_1"
-            xmlns="http://www.w3.org/2000/svg"
-            xmlnsXlink="http://www.w3.org/1999/xlink"
-            className="w-[32] h-[32] hover:border-2 rounded hover:rounded hover:border-white"
-            viewBox="0 0 567.12 567.12"
-            xmlSpace="preserve"
-            stroke="#16ac34"
-            strokeWidth="20.983551000000002"
-          >
-            <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
-            <g
-              id="SVGRepo_tracerCarrier"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            ></g>
-            <g id="SVGRepo_iconCarrier">
-              <g>
-                <g>
-                  <path d="M0,567.119h567.123V0.004H0V567.119z M56.818,283.477l43.556-43.568c5.404-5.404,11.812-8.109,19.217-8.109 c7.399,0,13.807,2.705,19.217,8.109l90.092,90.105l199.408-199.409c5.404-5.404,11.811-8.121,19.217-8.121 c7.398,0,13.807,2.717,19.217,8.121l43.557,43.55c5.402,5.422,8.113,11.824,8.113,19.217c0,7.405-2.711,13.813-8.113,19.217 L248.117,474.764c-5.41,5.422-11.818,8.121-19.217,8.121c-7.405,0-13.813-2.705-19.217-8.121L56.818,321.91 c-5.41-5.404-8.115-11.812-8.115-19.217C48.703,295.287,51.402,288.881,56.818,283.477z"></path>
-                </g>
-              </g>
-            </g>
-          </svg>
-        </button>
-        <button
-          className="bg-white text-white rounded-full disabled:opacity-50"
-          onClick={handleRejectClick}
-        >
-          <svg
-            className="w-[43] h-[43] hover:border-2 fill-current hover:rounded-full hover:border-white"
-            viewBox="0 0 512 512"
-            version="1.1"
-            xmlSpace="preserve"
-            xmlns="http://www.w3.org/2000/svg"
-            xmlnsXlink="http://www.w3.org/1999/xlink"
-          >
-            <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
-            <g
-              id="SVGRepo_tracerCarrier"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            ></g>
-            <g id="SVGRepo_iconCarrier">
-              <style type="text/css">
-                {`
-                  .st0{fill:#f40101;}
-                  .st1{fill:none;stroke:#f40101;stroke-width:32;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;}
-                `}
-              </style>
-              <g id="Layer_1"></g>
-              <g id="Layer_2">
-                <g>
-                  <path
-                    className="st0"
-                    d="M263.24,43.5c-117.36,0-212.5,95.14-212.5,212.5s95.14,212.5,212.5,212.5s212.5-95.14,212.5-212.5 S380.6,43.5,263.24,43.5z M367.83,298.36c17.18,17.18,17.18,45.04,0,62.23v0c-17.18,17.18-45.04,17.18-62.23,0l-42.36-42.36 l-42.36,42.36c-17.18,17.18-45.04,17.18-62.23,0v0c-17.18-17.18-17.18-45.04,0-62.23L201.01,256l-42.36-42.36 c-17.18-17.18-17.18-45.04,0-62.23v0c17.18-17.18,45.04-17.18,62.23,0l42.36,42.36l42.36-42.36c17.18-17.18,45.04-17.18,62.23,0v0 c17.18,17.18,17.18,45.04,0,62.23L325.46,256L367.83,298.36z"
-                  ></path>
-                </g>
-              </g>
-            </g>
-          </svg>
-        </button>
-      </div>
-
+      {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
-            <h2 className="text-xl font-semibold mb-4">
-              FYP Document Rejection
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-200 p-6 rounded-lg max-w-md w-full relative">
+            <button
+              onClick={handleCloseModal}
+              className="absolute font-black top-2 right-2 text-gray-500 hover:text-gray-700"
+            >
+              &#10005;
+            </button>
+
+            <div className="mb-4 text-sm text-gray-700 flex space-x-3">
+              <p className="bg-gray-300 rounded-full px-4 py-1 font-bold text-[#0069D9]">
+                {rejectionType}
+              </p>
+              <p className="bg-gray-300 rounded-full px-4 py-1 font-bold text-[#0069D9]">
+                {projectTitle || "Project Title Missing"}
+              </p>
+            </div>
+
+            <h2 className="text-lg font-bold mb-4 text-[#0069D9]">
+              Reason for Rejection
             </h2>
             <form onSubmit={handleSubmit}>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2">
-                  Reason
-                </label>
-                <input
-                  type="text"
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  placeholder="Enter reason"
-                  required
-                />
-              </div>
+              <textarea
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="Enter your reason..."
+                className="w-full border border-gray-300 rounded p-2 mb-4 text-black"
+                rows={4}
+                required
+              ></textarea>
               <div className="flex justify-end">
                 <button
-                  type="button"
-                  onClick={handleCloseModal}
-                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded mr-2"
-                >
-                  Cancel
-                </button>
-                <button
                   type="submit"
-                  className="bg-blue-500 text-white px-4 py-2 rounded"
+                  className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
                 >
                   Submit
                 </button>
               </div>
             </form>
+
+            <div className="mt-6 space-y-2">
+              <h3 className="text-lg font-semibold text-[#0069D9]">
+                Student Details
+              </h3>
+              <div className="flex justify-between text-sm text-gray-700">
+                <p>
+                  <strong>Student ID:</strong>{" "}
+                  {Array.isArray(studentId)
+                    ? studentId.join(", ")
+                    : studentId}
+                </p>
+                <p>
+                  <strong>Roll Number:</strong>{" "}
+                  {Array.isArray(rollNumber)
+                    ? rollNumber.join(", ")
+                    : rollNumber}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -50,9 +50,9 @@ export default function QAupload() {
   };
 
   return (
-    <div className="p-6">
-      <div className="p-6 max-w-md mx-auto bg-white border-2 rounded-lg border-[#0069D9]">
-        <h2 className="text-xl text-center font-semibold mb-4">Upload Form</h2>
+     <div className="w-full h-full overflow-x-hidden px-4 py-6">
+      <div className="p-6 max-w-lg mx-auto w-full  bg-white border-2 rounded-lg border-[#0069D9]">
+        <h2 className="text-[#0069D9] text-xl text-center font-extrabold mb-4">Upload Form</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label className="block text-gray-700 text-sm font-bold mb-2">
@@ -81,9 +81,7 @@ export default function QAupload() {
                 <option value="">Select upload type</option>
                 <option value="cvTemplate">CV Template</option>
                 <option value="assignment">Assignment</option>
-                <option value="submissionDeadline">
-                  Submission Deadline
-                </option>
+                <option value="submissionDeadline">Submission Deadline</option>
                 {/* Add more options as needed */}
               </select>
             </div>

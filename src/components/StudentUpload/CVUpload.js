@@ -1,61 +1,111 @@
+import React, { useRef, useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import React, { useRef, useState } from "react";
 import toast from "react-hot-toast";
 
-export default function CVUpload() {
+export default function CVUpload({ userId, rollNumber }) {
   const fileInputRef = useRef(null);
   const [file, setFile] = useState(null);
-  const [isUploading, setIsUploading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isFileUploaded, setIsFileUploaded] = useState(false);
+  const [uploadMessage, setUploadMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  
+  useEffect(() => {
+    const checkCvUploadStatus = async () => {
+      if (!userId) return;
+      
+      try {
+        const response = await fetch(`/api/UploadFile/CvStatus?userId=${userId}`);
+        const data = await response.json();
+        setUploadMessage(data.message);
+        setIsSubmitted(!!data.cvFilePath);
+      } catch (error) {
+        console.error("Error checking CV upload status:", error);
+      }
+    };
+
+    checkCvUploadStatus();
+  }, [userId]);
 
   const handleFileChange = (event) => {
     const selectedFile = event.target.files[0];
     if (selectedFile) {
+      // Client-side validation
+      const validTypes = ['image/jpeg', 'image/jpg'];
+      if (!validTypes.includes(selectedFile.type.toLowerCase())) {
+        toast.error("Only JPG files are allowed");
+        return;
+      }
       setFile(selectedFile);
-      setIsFileUploaded(true);
-      toast.success("File Uploaded Successfully!");
+      toast.success("File selected successfully!");
     }
   };
-
+  
   const handleUploadClick = (event) => {
     event.preventDefault();
     if (!isSubmitted) {
       fileInputRef.current.click();
     }
   };
+  
 
-  const handleSubmit = async (uploadType) => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
     if (!file) {
-      toast.error("Please upload a file first.");
-      return;
+    toast.error("Please upload a file first.");
+    return;
+  }
+  
+  if (!userId || !rollNumber) {
+    toast.error("Missing userId or rollNumber.");
+    return;
+  }
+  
+  const loadingToastId = toast.loading("Validating CV...");
+  
+  try {
+    
+    const uploadFormData = new FormData();
+    uploadFormData.append("cvFile", file);
+    uploadFormData.append("userId", userId);
+    uploadFormData.append("rollNumber", rollNumber);
+    uploadFormData.append("fileType", "cv");
+
+    const uploadRes = await fetch("/api/UploadFile/Upload", {
+      method: "POST",
+      body: uploadFormData,
+    });
+
+    if (!uploadRes.ok) {
+      const errorData = await uploadRes.json();
+      throw new Error(errorData.message || 'File upload failed');
     }
 
-    const formData = new FormData();
-    formData.append("cvFile", file); // Change "file" to "cvFile"
-    formData.append("userId", localStorage.getItem("userId"));
-    formData.append("fileType", "cv"); // Add fileType
+    // 4. Success
+    toast.success("CV uploaded successfully!", { id: loadingToastId });
+    setIsSubmitted(true);
+    setUploadMessage("CV submitted successfully");
 
-    setIsUploading(true);
-
-    try {
-      const response = await fetch("/api/UploadFile/Upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await response.json();
-      if (response.ok) {
-        toast.success("File Submitted Successfully!");
-        setIsSubmitted(true);
-      } else {
-        toast.error(`Error submitting file: ${data.error}`);
+      // 5. Optional: Remove notification
+      try {
+        await fetch("/api/SupervisorDelete/RemoveCvNotification", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ studentId: userId, rollNumber }),
+        });
+      } catch (error) {
+        console.error("Error removing notification:", error);
       }
+
     } catch (error) {
-      console.error("Error:", error);
-      toast.error("Something went wrong.");
+      toast.error(error.message, { 
+        id: loadingToastId,
+        duration: 5000 
+      });
+      console.error("CV upload error:", error);
     } finally {
-      setIsUploading(false);
+      setIsLoading(false);
+     
     }
   };
 
@@ -64,6 +114,11 @@ export default function CVUpload() {
       <h2 className="font-extrabold text-base text-[#0069D9] p-4 text-center">
         CV UPLOAD
       </h2>
+      {uploadMessage && (
+        <div className="text-center text-green-600 font-bold mb-4">
+          {uploadMessage}
+        </div>
+      )}
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -87,42 +142,51 @@ export default function CVUpload() {
               </td>
               <td className="px-4 py-3 font-medium">N/A</td>
               <td className="px-4 py-3 font-medium">N/A</td>
-              <td className="px-4 py-3 font-medium flex flex-col items-center  justify-center">
-                <button
-                  onClick={handleUploadClick}
-                  className={`p-2 rounded-full  text-[#0069D9] hover:bg-gray-300 transition-all duration-200 ${
-                    isSubmitted ? " cursor-not-allowed" : ""
-                  }`}
-                  disabled={isSubmitted}
-                >
-                  <i className="bi bi-cloud-arrow-up-fill text-4xl"></i>
-                </button>
-                {file && (
-                  <span className="text-sm text-gray-700 dark:text-gray-300 mt-1">
-                    {file.name}
+              <td className="px-4 py-3 font-medium flex flex-col items-center justify-center">
+                {isSubmitted ? (
+                  <span className="text-green-600 font-bold text-center">
+                    Submitted
                   </span>
+                ) : (
+                  <>
+                    <button
+                      onClick={handleUploadClick}
+                      className={`p-2 rounded-full text-[#0069D9] hover:bg-gray-300 transition-all duration-200 ${
+                        isSubmitted ? "cursor-not-allowed" : ""
+                      }`}
+                      disabled={isSubmitted}
+                    >
+                      <i className="bi bi-cloud-arrow-up-fill text-4xl"></i>
+                    </button>
+                    {file && (
+                      <span className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+                        {file.name}
+                      </span>
+                    )}
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      className="hidden"
+                      accept=".jpg,.jpeg"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      ( Upload Format in .jpg )
+                    </p>
+                  </>
                 )}
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  className="hidden"
-                  accept=".png" // Allow only PNG files
-                />
-                {/* Moved the text below the upload icon */}
-                <p className="text-xs text-gray-500 mt-1">
-                  ( Upload Format in .jpg ) 
-                </p>
               </td>
               <td className="px-4 py-3 font-medium">
                 <button
-                  onClick={() => handleSubmit("cv")}
+                  onClick={handleSubmit}
+                  disabled={isSubmitted || isLoading}
                   className={`px-4 py-2 text-white rounded-md ${
-                    isSubmitted ? "cursor-not-allowed" : "bg-green-500"
+                    isSubmitted ? "cursor-not-allowed " : 
+                    isLoading ? "bg-yellow-500" : "bg-green-500 hover:bg-green-600"
                   }`}
-                  disabled={isSubmitted}
                 >
-                  {isSubmitted ? (
+                  {isLoading ? "Processing..." : 
+                   isSubmitted ? (
                     <i className="bi bi-check-circle-fill text-green-600 text-3xl"></i>
                   ) : (
                     "Submit"

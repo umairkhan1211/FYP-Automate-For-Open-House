@@ -149,7 +149,7 @@ function AddHOD({ darkMode }) {
             </label>
             <select
               {...register("department", { required: true })}
-              className="leading-tight border-2 border-[#0069D9] rounded w-full py-1.5 px-3  dark:bg-slate-800 dark:text-white dark:border-white"
+              className="leading-tight border-2 text-slate-400 border-[#0069D9] rounded w-full py-1.5 px-3  dark:bg-slate-800 dark:text-white dark:border-white"
             >
                 <option value="">Select Department</option>
                 <option value="Computer Science">Computer Science</option>

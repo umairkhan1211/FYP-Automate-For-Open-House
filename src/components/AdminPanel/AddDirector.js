@@ -148,7 +148,7 @@ function AddDirector({ darkMode }) {
           {/* Submit Button */}
           <button
             type="submit"
-            className={`w-full border-2 border-[#0069D9] text-white font-bold bg-[#0069D9] rounded-md p-2 dark:bg-blue-600 dark:border-white hover:bg-blue-600 hover:text-white hover:border-blue-600 ${
+            className={`w-full border-2  border-[#0069D9] text-white font-bold bg-[#0069D9] rounded-md p-2 dark:bg-blue-600 dark:border-white hover:bg-blue-600 hover:text-white hover:border-blue-600 ${
               buttonDisabled ? "opacity-50 cursor-not-allowed" : ""
             }`}
             disabled={buttonDisabled || loading}

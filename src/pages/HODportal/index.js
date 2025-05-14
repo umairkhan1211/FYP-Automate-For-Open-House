@@ -94,10 +94,10 @@ function Index({ token }) {
     <Layout token={token}>
       <div className="p-10">
         <div className="container mx-auto p-6">
-          <h2 className="text-2xl font-bold text-center mb-6">
+          <h2 className="text-[#0069D9] text-2xl font-bold text-center mb-6">
             Computer Science Department
           </h2>
-          <div className="mt-4">
+          <div className="mt-4 text-black">
             <p className="text-md font-semibold">Total Projects: {totalProjects}</p>
             <p className="text-md font-semibold">Pending Projects: {pendingProjects}</p>
             <p className="text-md font-semibold">Approved Projects: {approvedProjects}</p>
@@ -127,7 +127,7 @@ function Index({ token }) {
               </th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="text-[#0069D9]">
             {projects.map((project, index) => (
               <tr
                 key={project.id}

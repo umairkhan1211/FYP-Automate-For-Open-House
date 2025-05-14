@@ -1,3 +1,4 @@
+
 import '../styles/globals.css';
 import { Toaster } from "react-hot-toast";
 import Head from "next/head"; // ✅ Import Head properly

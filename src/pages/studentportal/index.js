@@ -2,6 +2,7 @@ import Link from "next/link";
 import Layout from "../../components/layouts/Layout";
 import React, { useState } from "react";
 import StudentNotification from "../../components/Notification/StudentNotification";
+import jwt from 'jsonwebtoken'; // Import jsonwebtoken
 
 export async function getServerSideProps({ req }) {
   const token = req.cookies.token;
@@ -15,12 +16,29 @@ export async function getServerSideProps({ req }) {
     };
   }
 
+  // Decode the token to extract user information without verifying
+  let userData;
+  try {
+    userData = jwt.decode(token); // Decode the token without verifying
+    if (!userData) {
+      throw new Error("Failed to decode token");
+    }
+  } catch (error) {
+    console.error("Token decoding failed:", error);
+    return {
+      redirect: {
+        destination: "/",
+        permanent: false,
+      },
+    };
+  }
+
   return {
-    props: { token }, // Pass the token to the page as a prop
+    props: { token, userData }, // Pass the token and userData to the page as props
   };
 }
 
-function Index({ token }) {
+function Index({ token , userData }) {
   const [showUpload, setShowUpload] = useState(true); // State to toggle between upload and notification
 
   return (
@@ -207,7 +225,7 @@ function Index({ token }) {
             </div>
           </div>
         ) : (
-          <StudentNotification /> // Render the Notification component
+          <StudentNotification userId={userData.id} />  // Render the Notification component
         )}
       </div>
     </Layout>

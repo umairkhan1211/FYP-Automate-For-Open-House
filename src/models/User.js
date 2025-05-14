@@ -26,6 +26,19 @@ const userSchema = new mongoose.Schema({
       message: "Invalid roll number field",
     },
   },
+  projectTitle: {
+    type: String,
+    required: function () {
+      return this.role?.toLowerCase() === 'student';
+    },
+  },
+  supervisor: {
+    type: String,
+    required: function () {
+      return this.role?.toLowerCase() === 'student';
+    },
+  },
+  
   isVerified: { type: Boolean, default: false },
   isAdmin: { type: Boolean, default: false },
   forgotPasswordToken: String,
@@ -54,4 +67,3 @@ userSchema.pre("save", function (next) {
 const User = mongoose.models.User || mongoose.model("User", userSchema);
 
 export default User;
-

@@ -1,4 +1,4 @@
-import { connect, disconnect } from "../../../lib/db";
+import { connect } from "../../../lib/db";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") { // Ensure the request method is POST for logout
@@ -22,8 +22,5 @@ export default async function handler(req, res) {
     console.error("Logout error:", error);
     // Return a 500 response if something goes wrong
     return res.status(500).json({ error: error.message });
-  } finally {
-    // Disconnect from the database if necessary
-    await disconnect();
-  }
+  } 
 }

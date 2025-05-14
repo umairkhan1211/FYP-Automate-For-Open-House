@@ -41,7 +41,7 @@ function Header({ token }) {
 
   return (
     <header
-      className={`sticky top-0 z-50 p-12 transition-all duration-300    ${
+      className={`sticky top-0 z-50 p-12 transition-all duration-300  border-b-2 border-gray-100  ${
         isLoggedIn ? "bg-[#0069D9] text-white" : "bg-gray-100 text-[#0069D9]"
       }`}
     >
@@ -86,8 +86,8 @@ function Header({ token }) {
                 <i className="bi bi-person-circle text-4xl"></i>
               </div>
               <div className="flex flex-col items-start ml-2">
-                <h5 className="font-extrabold capitalize ">{userName}</h5>
-                <smalls className="text-xs text-gray-200">{userEmail}</smalls>
+                <h5 className="font-extrabold capitalize italic ">{userName}</h5>
+                <smalls className="text-xs text-gray-200 italic">{userEmail}</smalls>
               </div>
             </div>
 

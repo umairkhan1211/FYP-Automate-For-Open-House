@@ -21,16 +21,16 @@ export default function VideoPreview({ userId: initialUserId }) {
     const fetchData = async () => {
       if (!userId) return;
       try {
-        const response = await fetch(
-          `/api/UploadFile/GetUploadedFile?userId=${userId}`
-        );
+        // Fetch video and banner image using the new API
+        const response = await fetch(`/api/UploadFile/GetUploadedVideo?userId=${userId}`);
         const data = await response.json();
+  
         if (response.ok) {
           const correctedPath = data.bannerImageFilePath?.startsWith("public/")
             ? data.bannerImageFilePath.replace("public/", "/")
             : data.bannerImageFilePath;
           setBannerImagePath(correctedPath);
-          setVideoUrl(data.videoUrl || "");
+          setVideoUrl(data.videoUrl);
         } else {
           console.error("Error fetching data:", data.message);
         }
@@ -38,10 +38,10 @@ export default function VideoPreview({ userId: initialUserId }) {
         console.error("Error fetching data:", error);
       }
     };
-
+  
     fetchData();
   }, [userId]); // Fetch data only when userId is available
-
+  
   // Extract video ID from YouTube URL
   const getVideoId = (url) => {
     const videoIdMatch = url.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|(?:.*[?&]v=))|youtu\.be\/)([A-Za-z0-9_-]{11})/);
@@ -50,24 +50,23 @@ export default function VideoPreview({ userId: initialUserId }) {
 
   return (
     <div className="p-24">
-      <div className="max-w-2xl mx-auto p-6 bg-gray-100 shadow-2xl border-2 text-[#0069D9] border-[#0069D9] rounded">
+      <div className="max-w-2xl mx-auto p-4 shadow-xl text-[#0069D9] rounded">
         <div className="space-y-4">
-          <div>
+          <div className="border-2 border-[#0069D9] p-6">
             <label className="block font-semibold">Demo Video URL:</label>
             {videoUrl ? (
               <div className="space-y-2">
                 {/* Embed the YouTube video */}
                 <div className="p-2">
-
-                <iframe
-                  width="100%"
-                  height="280"
-                  src={`https://www.youtube.com/embed/${getVideoId(videoUrl)}`}
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
+                  <iframe
+                    width="100%"
+                    height="280"
+                    src={`https://www.youtube.com/embed/${getVideoId(videoUrl)}`}
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
                   ></iframe>
-                  </div>
+                </div>
                 <a
                   href={videoUrl}
                   target="_blank"
@@ -78,10 +77,10 @@ export default function VideoPreview({ userId: initialUserId }) {
                 </a>
               </div>
             ) : (
-              <p className="text-gray-700">No video uploaded.</p>
+              <p className="text-red-500 text-center">No video uploaded.</p>
             )}
           </div>
-          <div>
+          <div className="border-2 border-[#0069D9] p-6">
             <label className="block font-semibold">Banner Image:</label>
             {bannerImagePath ? (
               <Image

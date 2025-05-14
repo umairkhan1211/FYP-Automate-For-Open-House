@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import { connect, disconnect } from "../../../lib/db";
+import { connect } from "../../../lib/db";
 import User from "../../../models/User";
 import jwt from "jsonwebtoken";
 
@@ -28,7 +28,9 @@ export default async function handler(req, res) {
       id: user._id,
       name: user.name,
       email: user.email,
-      role: user.role, 
+      role: user.role,
+      department: user.department,
+      rollNumber: user.rollNumber,
     };
 
     const token = jwt.sign(tokenData, process.env.TOKEN_SECRET, {
@@ -47,12 +49,11 @@ export default async function handler(req, res) {
       success: true,
       role: user.role, // Send the user role in the response
       userId: user._id, // Include the user ID in the response
+      department: user.department,
+      rollNumber: user.rollNumber,
     });
-
   } catch (error) {
     console.error("Error during login:", error);
     return res.status(500).json({ message: "Internal server error" });
-  } finally {
-    await disconnect();
-  }
+  } 
 }

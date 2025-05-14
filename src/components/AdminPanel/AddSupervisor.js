@@ -73,7 +73,8 @@ export default function SupervisorSignup({ darkMode }) {
             ADD SUPERVISOR
           </h1>
         </div>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 text-black
+        ">
           <div>
             <input
               {...register("name", {
@@ -146,7 +147,7 @@ export default function SupervisorSignup({ darkMode }) {
             </label>
             <select
               {...register("department", { required: true })}
-              className="leading-tight border-2 border-[#0069D9] rounded w-full py-1.5 px-3  dark:bg-slate-800 dark:text-white dark:border-white"
+              className="leading-tight border-2 text-slate-400 border-[#0069D9] rounded w-full py-1.5 px-3  dark:bg-slate-800 dark:text-white dark:border-white"
             >
                 <option value="">Select Department</option>
                 <option value="Computer Science">Computer Science</option>

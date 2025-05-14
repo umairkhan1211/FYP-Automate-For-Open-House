@@ -76,10 +76,10 @@ function CE() {
   return (
     <>
       <div className="container mx-auto p-6">
-        <h2 className="text-2xl font-bold text-center mb-6">
+        <h2 className=" text-[#0069D9] text-2xl font-bold text-center mb-6">
           Civil Engineering Department
         </h2>
-        <div className="mt-4 mb-4">
+        <div className="text-black mt-4 mb-4 ">
           <p className="text-md font-semibold">
             Total Projects: {totalProjects}
           </p>
@@ -117,7 +117,7 @@ function CE() {
             </th>
           </tr>
         </thead>
-        <tbody>
+        <tbody className="text-[#0069D9]">
           {ceprojects.map((project, index) => (
             <tr key={project.id} className="border-b border-2 border-[#0069D9]">
               <td className="whitespace-nowrap px-6 py-4 font-medium border-2 border-[#0069D9]">

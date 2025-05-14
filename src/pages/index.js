@@ -9,7 +9,8 @@ function Index() {
 
     useEffect(() => {
         // Simulate a delay for loading
-        const timer = setTimeout(() => setLoading(false), 7300); // Adjust the delay as needed
+        // const timer = setTimeout(() => setLoading(false), 7300); // Adjust the delay as needed
+        const timer = setTimeout(() => setLoading(false), 1300); // Adjust the delay as needed
         return () => clearTimeout(timer);
     }, []);
 

@@ -1,23 +1,28 @@
 import mongoose from 'mongoose';
 
-export const connect = async () => {
-  try {
-    if (!process.env.DATABASE_URL) {
-      console.error('DATABASE_URL is missing from environment variables.');
-      return;
-    }
+const MONGODB_URI = process.env.DATABASE_URL;
 
-    if (mongoose.connection.readyState >= 1) {
-      console.log('Already connected to MongoDB.');
-      return;
-    }
+if (!MONGODB_URI) {
+  throw new Error('❌ DATABASE_URL is not defined in environment variables');
+}
 
-    await mongoose.connect(process.env.DATABASE_URL, {
+let cached = global.mongoose || { conn: null, promise: null };
+
+export async function connect() {
+  if (cached.conn) {
+    return cached.conn;
+  }
+
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 20000, // Increased timeout
+      serverSelectionTimeoutMS: 20000,
     });
+  }
 
+  try {
+    cached.conn = await cached.promise;
     console.log('✅ MongoDB connected successfully.');
 
     mongoose.connection.on('disconnected', () => {
@@ -28,18 +33,10 @@ export const connect = async () => {
       console.error('❌ MongoDB connection error:', err);
     });
 
+    global.mongoose = cached;
+    return cached.conn;
   } catch (error) {
     console.error('🚨 MongoDB connection failed:', error);
+    throw error;
   }
-};
-
-export const disconnect = async () => {
-  try {
-    if (mongoose.connection.readyState > 0) {
-      await mongoose.disconnect();
-      console.log('⚠️ MongoDB disconnected');
-    }
-  } catch (error) {
-    console.error('❌ Error during MongoDB disconnection:', error);
-  }
-};
+}
