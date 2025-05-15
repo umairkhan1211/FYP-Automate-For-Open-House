@@ -40,10 +40,8 @@ export default function Review({ token, supervisorId, supervisorRole }) {
       return;
     }
     console.log(
-      "Navigating to preview with rollNumber:",
-      rollNumber,
-      "and studentId:",
-      studentId
+      "supervisor id or role dahaaaaaaaaaaaa",
+      supervisorId,supervisorRole
     );
     router.push({
       pathname: `/supervisorportal/Preview`,

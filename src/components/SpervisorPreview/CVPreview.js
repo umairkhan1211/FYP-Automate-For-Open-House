@@ -1,4 +1,3 @@
-// components/SpervisorPreview/CVPreview.js
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import axios from "axios";
@@ -6,18 +5,23 @@ import axios from "axios";
 function CVPreview({
   cvFilePath,
   rollNumber,
-  supervisorId,
   studentId,
-  supervisorRole,
+ supervisorId,
+supervisorRole
 }) {
-
-
-  console.log("Props received in CVPreview:", { studentId, supervisorId, rollNumber , cvFilePath });
+  console.log("Props received in CVPreview:", {
+    studentId,
+    supervisorId,
+supervisorRole,
+    rollNumber,
+    cvFilePath,
+  });
 
   const [cvUrl, setCvUrl] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [reason, setReason] = useState("");
+  const [isApproved, setIsApproved] = useState(false); // New state for tracking approval
 
   useEffect(() => {
     if (cvFilePath) {
@@ -30,36 +34,65 @@ function CVPreview({
     setIsLoading(false);
   }, [cvFilePath]);
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
+  // Handle approval or rejection
+  const handleApproval = async () => {
+    try {
+      // 1. Update the supervisorCvReview status to 'Approved'
+      const response = await axios.put("/api/Status/SupCvReview", {
+        studentId,
+        supervisorId,
+        status: "approved",
+      });
 
-  try {
-    // 1. Send rejection notification
-    await axios.post("/api/Notification/SupervisorNotification", {
-      studentId,
-      supervisorRole,
-      supervisorId,
-      rollNumber,
-      type: "cv",
-      optionalMessage: reason,
-    });
-    
-    // 2. Remove CV path from Upload model
-    await axios.put("/api/SupervisorDelete/RemoveCV", {
-      studentId,
-    });
+      if (response?.supervisorCvReview === "approved") {
+        setIsApproved(true);
+      }
 
-    console.log("Notification sent and CV path removed successfully");
+      console.log("Supervisor CV status updated to Approved");
+      setIsApproved(true); // Set to true when approved
+    } catch (error) {
+      console.error("Error updating approval status:", error);
+    }
+  };
 
-    window.location.reload();
-  } catch (error) {
-    console.error("Error submitting rejection:", error);
-  }
+  const handleRejection = async (e) => {
+    e.preventDefault();
 
-  setIsModalOpen(false);
-  setReason("");
-};
+    try {
+      // 1. Send rejection notification
+      await axios.post("/api/Notification/SupervisorNotification", {
+        studentId,
+        supervisorId,
+        userRole: supervisorRole, // ✅ This was missing!
+        rollNumber,
+        type: "cv",
+        optionalMessage: reason,
+      });
 
+      // 2. Remove CV path from Upload model
+      await axios.put("/api/SupervisorDelete/RemoveCV", {
+        studentId,
+      });
+
+      // 3. Update the supervisorCvReview status to 'Rejected'
+      await axios.put("/api/Status/SupCvReview", {
+        studentId,
+        supervisorId,
+        status: "rejected",
+      });
+
+      console.log(
+        "Notification sent, CV path removed, and status updated to Rejected"
+      );
+
+      window.location.reload(); // Refresh the page after rejection
+    } catch (error) {
+      console.error("Error submitting rejection:", error);
+    }
+
+    setIsModalOpen(false);
+    setReason("");
+  };
 
   if (isLoading) {
     return <p className="text-center text-gray-500">Loading...</p>;
@@ -81,21 +114,30 @@ function CVPreview({
             className="shadow-md mx-auto"
           />
 
-          <div className="flex justify-end p-6 space-x-4 mx-auto w-1/2">
-            <button
-              className="bg-green-500 text-white p-3 rounded-full hover:bg-green-600"
-              title="Approve"
-            >
-              ✔️
-            </button>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="bg-red-500 text-white p-3 rounded-full hover:bg-red-600"
-              title="Reject"
-            >
-              ❌
-            </button>
-          </div>
+          {!isApproved && (
+            <div className="flex justify-end p-6 space-x-4 mx-auto w-1/2">
+              <button
+                onClick={handleApproval}
+                className="bg-green-500 text-white p-3 rounded-full hover:bg-green-600"
+                title="Approve"
+              >
+                ✔️
+              </button>
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="bg-red-500 text-white p-3 rounded-full hover:bg-red-600"
+                title="Reject"
+              >
+                ❌
+              </button>
+            </div>
+          )}
+
+          {isApproved && (
+            <div className="text-green-500 text-center font-bold">
+              Approved ✔️
+            </div>
+          )}
         </div>
       ) : (
         <p className="text-red-500 text-center font-bold text-lg">
@@ -105,7 +147,7 @@ function CVPreview({
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full relative">
+          <div className="bg-gray-200 p-6 rounded-lg max-w-md w-full relative">
             <button
               onClick={() => setIsModalOpen(false)}
               className="absolute top-2 right-2 text-gray-700 text-xl font-bold"
@@ -114,12 +156,12 @@ function CVPreview({
             </button>
             <div className="flex space-x-2">
               <div className="">
-                <p className="mb-2 text-[#0069D9] bg-gray-200 rounded-full p-2 text-sm font-bold">
+                <p className="mb-2 text-[#0069D9] bg-gray-300 rounded-full p-2 text-sm font-bold">
                   CV
                 </p>
               </div>
               <div>
-                <p className="mb-4 text-[#0069D9] bg-gray-200 rounded-full p-2 text-sm font-bold capitalize">
+                <p className="mb-4 text-[#0069D9] bg-gray-300 rounded-full p-2 text-sm font-bold capitalize">
                   {rollNumber}
                 </p>
               </div>
@@ -127,12 +169,12 @@ function CVPreview({
             <h2 className="text-lg font-bold mb-4 text-[#0069D9]">
               Reason for Rejection
             </h2>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleRejection}>
               <textarea
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 placeholder="Enter reason..."
-                className="w-full border border-gray-300 rounded p-2 mb-4 text-black"
+                className="w-full border bg-gray-100 border-gray-500 rounded p-2 mb-4 text-black"
                 rows={4}
                 required
               />

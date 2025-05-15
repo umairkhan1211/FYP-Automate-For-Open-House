@@ -8,13 +8,15 @@ export default function CVUpload({ userId, rollNumber }) {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [uploadMessage, setUploadMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  
+
   useEffect(() => {
     const checkCvUploadStatus = async () => {
       if (!userId) return;
-      
+
       try {
-        const response = await fetch(`/api/UploadFile/CvStatus?userId=${userId}`);
+        const response = await fetch(
+          `/api/UploadFile/CvStatus?userId=${userId}`
+        );
         const data = await response.json();
         setUploadMessage(data.message);
         setIsSubmitted(!!data.cvFilePath);
@@ -30,7 +32,7 @@ export default function CVUpload({ userId, rollNumber }) {
     const selectedFile = event.target.files[0];
     if (selectedFile) {
       // Client-side validation
-      const validTypes = ['image/jpeg', 'image/jpg'];
+      const validTypes = ["image/jpeg", "image/jpg"];
       if (!validTypes.includes(selectedFile.type.toLowerCase())) {
         toast.error("Only JPG files are allowed");
         return;
@@ -39,52 +41,70 @@ export default function CVUpload({ userId, rollNumber }) {
       toast.success("File selected successfully!");
     }
   };
-  
+
   const handleUploadClick = (event) => {
     event.preventDefault();
     if (!isSubmitted) {
       fileInputRef.current.click();
     }
   };
-  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!file) {
-    toast.error("Please upload a file first.");
-    return;
-  }
-  
-  if (!userId || !rollNumber) {
-    toast.error("Missing userId or rollNumber.");
-    return;
-  }
-  
-  const loadingToastId = toast.loading("Validating CV...");
-  
-  try {
-    
-    const uploadFormData = new FormData();
-    uploadFormData.append("cvFile", file);
-    uploadFormData.append("userId", userId);
-    uploadFormData.append("rollNumber", rollNumber);
-    uploadFormData.append("fileType", "cv");
-
-    const uploadRes = await fetch("/api/UploadFile/Upload", {
-      method: "POST",
-      body: uploadFormData,
-    });
-
-    if (!uploadRes.ok) {
-      const errorData = await uploadRes.json();
-      throw new Error(errorData.message || 'File upload failed');
+      toast.error("Please upload a file first.");
+      return;
     }
 
-    // 4. Success
-    toast.success("CV uploaded successfully!", { id: loadingToastId });
-    setIsSubmitted(true);
-    setUploadMessage("CV submitted successfully");
+    if (!userId || !rollNumber) {
+      toast.error("Missing userId or rollNumber.");
+      return;
+    }
+
+    const loadingToastId = toast.loading("Validating CV...");
+
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append("cvFile", file);
+      uploadFormData.append("userId", userId);
+      uploadFormData.append("rollNumber", rollNumber);
+      uploadFormData.append("fileType", "cv");
+
+      const uploadRes = await fetch("/api/UploadFile/Upload", {
+        method: "POST",
+        body: uploadFormData,
+      });
+
+      if (!uploadRes.ok) {
+        const errorData = await uploadRes.json();
+        throw new Error(errorData.message || "File upload failed");
+      }
+
+      // Step 2: Submit CV status
+      const submitRes = await fetch("/api/Status/CVSubmit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          studentId: userId,
+          rollNumber,
+        }),
+      });
+
+      const submitData = await submitRes.json();
+
+      if (!submitRes.ok) {
+        throw new Error(submitData.message || "Failed to update CV status");
+      }
+
+    
+      setIsSubmitted(true);
+      setUploadMessage("CV submitted successfully");
+
+      // 4. Success
+      toast.success("CV uploaded successfully!", { id: loadingToastId });
+      setIsSubmitted(true);
+      setUploadMessage("CV submitted successfully");
 
       // 5. Optional: Remove notification
       try {
@@ -96,16 +116,14 @@ export default function CVUpload({ userId, rollNumber }) {
       } catch (error) {
         console.error("Error removing notification:", error);
       }
-
     } catch (error) {
-      toast.error(error.message, { 
+      toast.error(error.message, {
         id: loadingToastId,
-        duration: 5000 
+        duration: 5000,
       });
       console.error("CV upload error:", error);
     } finally {
       setIsLoading(false);
-     
     }
   };
 
@@ -181,12 +199,16 @@ export default function CVUpload({ userId, rollNumber }) {
                   onClick={handleSubmit}
                   disabled={isSubmitted || isLoading}
                   className={`px-4 py-2 text-white rounded-md ${
-                    isSubmitted ? "cursor-not-allowed " : 
-                    isLoading ? "bg-yellow-500" : "bg-green-500 hover:bg-green-600"
+                    isSubmitted
+                      ? "cursor-not-allowed "
+                      : isLoading
+                      ? "bg-yellow-500"
+                      : "bg-green-500 hover:bg-green-600"
                   }`}
                 >
-                  {isLoading ? "Processing..." : 
-                   isSubmitted ? (
+                  {isLoading ? (
+                    "Processing..."
+                  ) : isSubmitted ? (
                     <i className="bi bi-check-circle-fill text-green-600 text-3xl"></i>
                   ) : (
                     "Submit"

@@ -97,6 +97,7 @@ export default function Preview({ token, Details }) {
         return (
           <FYPPreview
             data={fypPreviewData}
+             Details={Details}
             projectTitle={projectTitle}
             supervisorId={supervisorIdState}
             userRole={userRole}
@@ -107,6 +108,7 @@ export default function Preview({ token, Details }) {
         return (
           <VideoPreview
             data={videoPreviewData}
+             Details={Details}
             projectTitle={projectTitle}
             supervisorId={supervisorIdState}
             userRole={userRole}

@@ -1,155 +1,3 @@
-// import path from "path";
-// import fs from "fs";
-// import multer from "multer";
-// import Upload from "../../../models/Upload";
-// import { connect } from "../../../lib/db";
-
-// export const config = {
-//   api: {
-//     bodyParser: false,
-//   },
-// };
-
-// // Ensure upload directory exists
-// const uploadDir = path.join(process.cwd(), "public/uploads");
-// if (!fs.existsSync(uploadDir)) {
-//   fs.mkdirSync(uploadDir, { recursive: true });
-// }
-
-// // Configure multer storage
-// const storage = multer.diskStorage({
-//   destination: (req, file, cb) => {
-//     cb(null, uploadDir);
-//   },
-//   filename: (req, file, cb) => {
-//     const uniqueName = Date.now() + "-" + file.originalname;
-//     cb(null, uniqueName);
-//   },
-// });
-
-// // Improved MIME type checking
-// const fileFilter = (req, file, cb) => {
-//   const allowedTypes = {
-//     cvFile: ["image/jpeg"],
-//     fypDocument: [
-//       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-//       "application/msword",
-//     ],
-//     videoThumbnail: ["image/jpeg"],
-//   };
-
-//   const fieldName = file.fieldname;
-//   const mimetype = file.mimetype;
-
-//   const isValid =
-//     allowedTypes[fieldName] && allowedTypes[fieldName].includes(mimetype);
-
-//   if (isValid) {
-//     cb(null, true);
-//   } else {
-//     cb(new Error(`Invalid file type for ${fieldName}. Received: ${mimetype}`));
-//   }
-// };
-
-// // Upload handler for 3 types of fields
-// const upload = multer({ storage, fileFilter }).fields([
-//   { name: "cvFile", maxCount: 1 },
-//   { name: "fypDocument", maxCount: 1 },
-//   { name: "videoThumbnail", maxCount: 1 },
-// ]);
-
-// const handler = async (req, res) => {
-//   try {
-//     await new Promise((resolve, reject) => {
-//       upload(req, res, (err) => {
-//         if (err) return reject(err);
-//         resolve();
-//       });
-//     });
-
-//     await connect();
-
-//     const { userId, fileType, projectTitle, groupMembers, videoUrl } = req.body;
-//     if (!userId) return res.status(400).json({ error: "User ID is required." });
-//     if (!fileType) return res.status(400).json({ error: "File type is required." });
-
-//     // CV Validation
-//     if (fileType === "cv" && req.files?.cvFile?.[0]) {
-//       const cvFile = req.files.cvFile[0];
-//       const fileBuffer = fs.readFileSync(cvFile.path);
-
-//       const validationRes = await fetch("http://localhost:3000/api/Validate/ValidateCvTemplate", {
-//         method: "POST",
-//         headers: {
-//           "Content-Type": "application/octet-stream",
-//         },
-//         body: Buffer.from(fileBuffer),
-//       });
-
-//       const validationData = await validationRes.json();
-
-//       if (!validationRes.ok || !validationData.success || !validationData.isMatch) {
-//         fs.unlinkSync(cvFile.path);
-//         return res.status(400).json({
-//           error: validationData.message || "CV does not match template",
-//         });
-//       }
-//     }
-
-//     // Save to DB
-//     let existingUpload = await Upload.findOne({ user: userId });
-//     if (!existingUpload) existingUpload = new Upload({ user: userId });
-
-//     if (fileType === "cv") {
-//       existingUpload.cvFilePath = req.files.cvFile[0].path.replace(/\\/g, "/");
-//     } else if (fileType === "fypDocument") {
-//       const groupMembersArray = groupMembers ? JSON.parse(groupMembers) : [];
-//       existingUpload.fypDocument = {
-//         filePath: req.files.fypDocument[0].path.replace(/\\/g, "/"),
-//         originalFileName: req.files.fypDocument[0].originalname,
-//         projectTitle: projectTitle || null,
-//         groupMembers: groupMembersArray,
-//       };
-//     } else if (fileType === "video") {
-//       existingUpload.video = {
-//         videoUrl: videoUrl || null,
-//         bannerImageFilePath: req.files.videoThumbnail[0].path.replace(/\\/g, "/"),
-//       };
-//     }
-
-//     await existingUpload.save();
-
-//     res.status(200).json({
-//       success: true,
-//       message: "File uploaded successfully",
-//       data: existingUpload,
-//     });
-//   } catch (error) {
-//     console.error("Upload error:", error);
-
-//     // Clean up uploaded files if something goes wrong
-//     if (req.files) {
-//       Object.values(req.files).forEach((files) => {
-//         files.forEach((file) => {
-//           try {
-//             fs.unlinkSync(file.path);
-//           } catch (err) {
-//             console.error("Cleanup failed:", err);
-//           }
-//         });
-//       });
-//     }
-
-//     res.status(500).json({
-//       success: false,
-//       error: error.message || "Internal Server Error",
-//     });
-//   }
-// };
-
-// export default handler;
-
-
 
 import path from "path";
 import fs from "fs";
@@ -252,13 +100,15 @@ const handler = async (req, res) => {
       existingUpload.fypDocument.projectTitle = projectTitle || null;
       existingUpload.fypDocument.groupMembers = groupMembersArray;
     }
-     else if (fileType === "video") {
-      if (!videoUrl) return res.status(400).json({ error: "Video URL is required." });
-      if (!req.files.videoThumbnail) return res.status(400).json({ error: "Thumbnail is required for video." });
+    else if (fileType === "video") {
+  if (videoUrl) {
+    existingUpload.video.videoUrl = videoUrl;
+  }
 
-      existingUpload.video.videoUrl = videoUrl || null;
-      existingUpload.video.bannerImageFilePath = req.files.videoThumbnail[0].path.replace(/\\/g, "/"); // ✅ Convert path
-    }
+  if (req.files.videoThumbnail) {
+    existingUpload.video.bannerImageFilePath = req.files.videoThumbnail[0].path.replace(/\\/g, "/");
+  }
+}
 
     await existingUpload.save();
 

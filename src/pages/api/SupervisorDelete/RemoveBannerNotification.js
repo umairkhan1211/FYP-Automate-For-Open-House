@@ -14,11 +14,11 @@ export default async function handler(req, res) {
 
     const objectId = new mongoose.Types.ObjectId(studentId);
 
-    const result = await Notification.deleteOne({
+    const result = await Notification.deleteMany({
       studentId: objectId,
       rollNumber: rollNumber,
-      type: "Banner Image", // Ensure this matches the type in your document
-      userRole: "supervisor", // Ensure this matches the role in your document
+      type: "banner",
+      userRole: { $in: ["supervisor", "qa"] }, // Match either role
     });
 
     console.log("Delete result:", result);

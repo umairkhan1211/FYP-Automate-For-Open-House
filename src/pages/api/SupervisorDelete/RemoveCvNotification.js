@@ -14,19 +14,20 @@ export default async function handler(req, res) {
 
     const objectId = new mongoose.Types.ObjectId(studentId);
 
-    const result = await Notification.deleteOne({
+    // Delete both supervisor and QA notifications of type 'cv'
+    const result = await Notification.deleteMany({
       studentId: objectId,
       rollNumber: rollNumber,
-      type: "cv", // Ensure this matches the type in your document
-      userRole: "supervisor", // Ensure this matches the role in your document
+      type: "cv",
+      userRole: { $in: ["supervisor", "qa"] }, // Match either role
     });
 
     console.log("Delete result:", result);
 
     if (result.deletedCount > 0) {
-      res.status(200).json({ message: "Notification deleted" });
+      res.status(200).json({ message: "Notification(s) deleted" });
     } else {
-      res.status(404).json({ message: "No matching notification found" });
+      res.status(404).json({ message: "No matching notifications found" });
     }
   } catch (error) {
     console.error("Error deleting notification:", error);

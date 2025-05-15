@@ -11,6 +11,7 @@ export default async function handler(req, res) {
         studentId = null,
         supervisorId = null,
         rollNumber = null,
+        userRole = null,
         type = null,
         optionalMessage = "",
         supervisorRole = null,

@@ -6,6 +6,7 @@ import QAChecklist from "../QAChecklist/QAChecklist";
 
 export default function FYPPreview({
   data = [],
+   Details,
   projectTitle,
   supervisorId,
   userRole,
@@ -21,39 +22,6 @@ export default function FYPPreview({
   const rollNumber = student?.rollNumber || "";
   const fypPath = student?.fypDocument || "";
 
-  useEffect(() => {
-    console.log("Student Data:", student);
-    console.log("FYP Path:", fypPath);
-  }, [student]);
-
-  const handleReject = async (e) => {
-    e.preventDefault();
-    try {
-      const payload = {
-        studentId,
-        rollNumber,
-        supervisorId,
-        userRole,
-        optionalMessage: reason,
-        type: "fyp",
-      };
-
-      const response = await axios.post(
-        "/api/Notification/FYPNotification",
-        payload
-      );
-
-      if (response.status === 201) {
-        await axios.put("/api/SupervisorDelete/RemoveFYP", { studentId });
-        setIsModalOpen(false);
-        setReason("");
-      } else {
-        console.error("Notification failed:", response.data.message);
-      }
-    } catch (error) {
-      console.error("Reject Error:", error.response || error);
-    }
-  };
 
   const handleDownload = async () => {
     if (!fypPath) {
@@ -90,11 +58,11 @@ export default function FYPPreview({
   return (
     <div className="p-4">
       
-      <h2 className="text-[#0069D9] text-center text-lg font-extrabold mb-4 mt-6">
+      <h2 className="text-[#0069D9] text-center text-base font-extrabold mb-4 ">
         FYP PREVIEW
       </h2>
-      <div className="flex items-center">
-        <div className="w-7/12 mx-auto p-4 ">
+      <div className="flex justify-between items-start">
+        <div className="w-7/12 mx-auto p-4  ">
           <div className="bg-gray-100 border-2 border-[#0069D9] rounded-lg p-6 space-y-4">
             <h3 className="text-base font-semibold text-[#0069D9]">
               {fypPath
@@ -113,12 +81,13 @@ export default function FYPPreview({
           </div>
         </div>
         <div className="flex-2">
-          <QAChecklist
+       {fypPath && <QAChecklist
            type="fyp"
             studentId={studentId}
             supervisorId={supervisorId}
             rollNumber={rollNumber}
-          />
+             Details={Details}
+        />}
         </div>
       </div>
     </div>

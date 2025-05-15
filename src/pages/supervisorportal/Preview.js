@@ -23,15 +23,16 @@ export async function getServerSideProps({ req }) {
 
 export default function Preview({ token }) {
   const router = useRouter();
-  const { rollNumber: queryRollNumber, studentId: queryStudentId, type: queryType } = router.query;
+  const { rollNumber: queryRollNumber, studentId: queryStudentId, type: queryType , supervisorId, supervisorRole  } = router.query;
+
 
   const [type, setType] = useState("");
   const [projectTitle, setProjectTitle] = useState("");
   const [fypDocument, setFypDocument] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [bannerImage, setBannerImage] = useState("");
-  const [supervisorId, setSupervisorId] = useState("");
-  const [supervisorRole, setSupervisorRole] = useState("");
+  // const [supervisorId, setSupervisorId] = useState("");
+  // const [supervisorRole, setSupervisorRole] = useState("");
   const [studentIds, setStudentIds] = useState([]);
   const [cvFilePath, setCvFilePath] = useState("");
 
@@ -39,7 +40,7 @@ export default function Preview({ token }) {
   const [rollNumberOnly, setRollNumberOnly] = useState("");
 
 
-   console.log("fyp ka file path",fypDocument)
+   console.log("supervisor id or role dekha",  supervisorId , supervisorRole)
 // Load preview data from sessionStorage
 useEffect(() => {
   const storedData = sessionStorage.getItem("previewData");

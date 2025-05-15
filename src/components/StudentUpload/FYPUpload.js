@@ -10,63 +10,87 @@ export default function FYPUpload({
 }) {
   const [fypDocument, setFypDocument] = useState(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [uploadMessage, setUploadMessage] = useState("");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    if (!fypDocument) {
-      toast.error("Please upload your FYP document first.");
-      return;
-    }
+  if (!fypDocument) {
+    toast.error("Please upload your FYP document first.");
+    return;
+  }
 
-    const loadingToastId = toast.loading("Uploading...");
+  const loadingToastId = toast.loading("Uploading...");
 
-    const formData = new FormData();
+  const formData = new FormData();
+  formData.append("fypDocument", fypDocument);
+  formData.append("userId", userId);
+  formData.append("rollNumber", rollNumber);
+  formData.append("fileType", "fypDocument");
 
-    formData.append("fypDocument", fypDocument);
-    formData.append("userId", userId);
-    formData.append("rollNumber", rollNumber);
-    formData.append("fileType", "fypDocument");
+  try {
+    // Step 1: Upload the FYP document
+    const response = await fetch("/api/UploadFile/Upload", {
+      method: "POST",
+      body: formData,
+    });
 
-    try {
-      const response = await fetch("/api/UploadFile/Upload", {
+    const data = await response.json();
+
+    if (response.ok) {
+      toast.success("FYP document uploaded successfully!", { id: loadingToastId });
+      setIsSubmitted(true);
+      resetForm();
+
+      // Step 2: Submit FYP status update
+      const fypStatusLoadingToastId = toast.loading("Updating FYP status...");
+      const submitRes = await fetch("/api/Status/FYPSubmit", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          studentId: userId,
+          rollNumber,
+        }),
       });
 
-      const data = await response.json();
+      const submitData = await submitRes.json();
 
-      if (response.ok) {
-        toast.success("Form submitted successfully!", { id: loadingToastId });
-        setIsSubmitted(true);
-        resetForm();
-
-        try {
-          await fetch("/api/SupervisorDelete/RemoveFypNotification", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ studentId: userId, rollNumber }),
-          });
-        } catch (error) {
-          console.error("Error removing notification:", error);
-        }
-      } else {
-        toast.error(`Error: ${data.error}`, { id: loadingToastId });
+      if (!submitRes.ok) {
+        throw new Error(submitData.message || "Failed to update FYP status");
       }
-    } catch (error) {
-      console.error("Error submitting FYP document:", error);
-      toast.error("Something went wrong.", { id: loadingToastId });
+
+   
+      setIsSubmitted(true);
+      setUploadMessage("FYP document submitted successfully");
+
+      // Step 3: Remove notification after successful submission
+      try {
+        await fetch("/api/SupervisorDelete/RemoveFypNotification", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ studentId: userId, rollNumber }),
+        });
+      } catch (error) {
+        console.error("Error removing notification:", error);
+      }
+    } else {
+      toast.error(`Error: ${data.error}`, { id: loadingToastId });
     }
-  };
+  } catch (error) {
+    console.error("Error submitting FYP document:", error);
+    toast.error("Something went wrong.", { id: loadingToastId });
+  }
+};
 
-  const resetForm = () => {
-    setFypDocument(null);
-    setIsSubmitted(false);
-  };
+const resetForm = () => {
+  setFypDocument(null);
+  setIsSubmitted(false);
+};
 
-  const isFormValid = () => {
-    return fypDocument;
-  };
+const isFormValid = () => {
+  return fypDocument;
+};
+
 
   return (
     <div className="p-16 text-left">
