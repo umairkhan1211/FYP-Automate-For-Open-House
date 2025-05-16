@@ -43,7 +43,6 @@ const handleSubmit = async (e) => {
       resetForm();
 
       // Step 2: Submit FYP status update
-      const fypStatusLoadingToastId = toast.loading("Updating FYP status...");
       const submitRes = await fetch("/api/Status/FYPSubmit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

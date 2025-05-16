@@ -1,19 +1,46 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 
-function QAChecklist({ 
-  type, 
-  Details, 
-  studentId, 
-  supervisorId, 
+function QAChecklist({
+  type,
+  Details,
+  studentId,
+  supervisorId,
   rollNumber,
   hasVideo,
-  hasBanner 
+  hasBanner,
+  alreadyApproved,
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [checklist, setChecklist] = useState([]);
   const [activeType, setActiveType] = useState(type);
+  // Inside QAChecklist component
+  const [localApproved, setLocalApproved] = useState(alreadyApproved);
+
+  console.log("detils ka data h yeah qachecklist pa" , Details , Details.userId , Details.userName )
+
+
+  useEffect(() => {
+    const checkApprovalStatus = async () => {
+      try {
+        const res = await fetch(
+          `/api/Checklist/GetChecklistStatus?rollNumber=${rollNumber}&type=${activeType}`
+        );
+        const data = await res.json();
+        setLocalApproved(data && data.rejectedPoints?.length === 0);
+      } catch (error) {
+        console.error("Error checking approval status:", error);
+        setLocalApproved(false);
+      }
+    };
+
+    if (hasVideo && hasBanner) {
+      checkApprovalStatus();
+    } else {
+      setLocalApproved(alreadyApproved);
+    }
+  }, [activeType, rollNumber, hasVideo, hasBanner, alreadyApproved]);
 
   useEffect(() => {
     // Only allow toggling if both video and banner are available
@@ -140,82 +167,148 @@ function QAChecklist({
     }
   }
 
-  const handleCheckboxChange = (id, actionType) => {
-    setChecklist((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              accepted: actionType === "accept",
-              rejected: actionType === "reject",
-            }
-          : item
-      )
-    );
+const handleCheckboxChange = (id, actionType) => {
+  setChecklist((prev) =>
+    prev.map((item) =>
+      item.id === id
+        ? {
+            ...item,
+            accepted: actionType === "accept" ? true : false,
+            rejected: actionType === "reject" ? true : false,
+          }
+        : item
+    )
+  );
+};
+
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  const approvedPoints = checklist
+    .filter((item) => item.accepted)
+    .map((item) => item.parameter);
+
+  const rejectedPoints = checklist
+    .filter((item) => item.rejected)
+    .map((item) => item.parameter);
+
+  // Determine the final type to use
+  let finalType;
+  if (hasVideo && hasBanner) {
+    finalType = activeType;
+  } else {
+    finalType = type;
+  }
+
+  const checklistdata = {
+    studentId,
+    qaId: Details?.userId,
+    qaName: Details?.userName,
+    rollNumber,
+    type: finalType,
+    rejectedPoints,
+    approvedPoints,
+    optionalMessage: reason,
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const rejectedPoints = checklist
-      .filter((item) => item.rejected)
-      .map((item) => item.parameter);
+  // Build status update object with qaId and qaName
+  let statusUpdate = {
+    studentId,
+    qaId: Details?.userId,
+    qaName: Details?.userName, // Add qaName to be saved in status
+  };
 
-    const finalType = hasVideo && hasBanner ? activeType : type;
+  const isRejected = rejectedPoints.length > 0;
 
-    const data = {
-      ...Details,
-      studentId,
-      supervisorId,
-      rollNumber,
-      type: finalType,
-      rejectedPoints,
-      optionalMessage: reason,
-    };
+  // Determine which API endpoint to call based on type
+  let apiEndpoint = "";
+  if (finalType === "cv") {
+    statusUpdate.cvStatus = isRejected ? "rejected" : "approved";
+    statusUpdate.supervisorCvReview = isRejected ? "rejected" : "approved";
+    statusUpdate.qaCvReview = isRejected ? "rejected" : "approved";
+    apiEndpoint = "/api/Status/QaCvReview";
+  } else if (finalType === "fyp") {
+    statusUpdate.fypStatus = isRejected ? "rejected" : "approved";
+    statusUpdate.supervisorFypReview = isRejected ? "rejected" : "approved";
+    statusUpdate.qaFypReview = isRejected ? "rejected" : "approved";
+    apiEndpoint = "/api/Status/QaFypReview";
+  } else if (finalType === "video") {
+    statusUpdate.videoStatus = isRejected ? "rejected" : "approved";
+    statusUpdate.supervisorVideoReview = isRejected ? "rejected" : "approved";
+    statusUpdate.qaVideoReview = isRejected ? "rejected" : "approved";
+    apiEndpoint = "/api/Status/QaVideoReview";
+  } else if (finalType === "banner") {
+    statusUpdate.bannerStatus = isRejected ? "rejected" : "approved";
+    statusUpdate.supervisorBannerReview = isRejected ? "rejected" : "approved";
+    statusUpdate.qaBannerReview = isRejected ? "rejected" : "approved";
+    apiEndpoint = "/api/Status/QaBannerReview";
+  }
 
-    console.log("Submit Data:", data);
+  try {
+    // First update the status
+    const reviewRes = await fetch(apiEndpoint, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(statusUpdate),
+    });
 
-    try {
-      // 1. Send the Notification
-      const response = await fetch("/api/Notification/Notification", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (response.ok) {
-        console.log("Notification saved successfully");
-
-        // 2. Conditionally remove the respective type based on rejection
-        if (rejectedPoints.length > 0) {
-          if (finalType === "cv") {
-            await axios.put("/api/SupervisorDelete/RemoveCV", { studentId });
-            console.log("CV removed successfully");
-          } else if (finalType === "fyp") {
-            await axios.put("/api/SupervisorDelete/RemoveFYP", { studentId });
-            console.log("FYP removed successfully");
-          } else if (finalType === "video") {
-            await axios.put("/api/SupervisorDelete/RemoveVideoUrl", { studentId });
-            console.log("Video removed successfully");
-          } else if (finalType === "banner") {
-            await axios.put("/api/SupervisorDelete/RemoveBannerImage", { studentId });
-            console.log("Banner removed successfully");
-          }
-        }
-
-        // 3. Reload page
-        window.location.reload();
-      } else {
-        console.error("Failed to save notification");
-      }
-    } catch (error) {
-      console.error("Error:", error);
+    if (!reviewRes.ok) {
+      const error = await reviewRes.json();
+      throw new Error(error.message || "Failed to update status");
     }
 
-    setIsModalOpen(false);
-  };
+    // Then create the checklist
+    const checklistRes = await fetch("/api/Checklist/Checklist", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(checklistdata),
+    });
 
+    if (!checklistRes.ok) {
+      const error = await checklistRes.json();
+      throw new Error(error.message || "Failed to create checklist");
+    }
+
+    // Handle notification if rejected
+    if (rejectedPoints.length > 0) {
+      const notificationData = {
+        ...Details,
+        studentId,
+        supervisorId,
+        rollNumber,
+        type: finalType,
+        rejectedPoints,
+        optionalMessage: reason,
+      };
+
+      await fetch("/api/Notification/Notification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(notificationData),
+      });
+
+      // Remove the rejected item
+      const removalEndpoints = {
+        cv: "/api/SupervisorDelete/RemoveCV",
+        fyp: "/api/SupervisorDelete/RemoveFYP",
+        video: "/api/SupervisorDelete/RemoveVideoUrl",
+        banner: "/api/SupervisorDelete/RemoveBannerImage",
+      };
+
+      if (removalEndpoints[finalType]) {
+        await axios.put(removalEndpoints[finalType], { studentId });
+      }
+    }
+
+    window.location.reload();
+  } catch (err) {
+    console.error("Submission error:", err);
+    alert(err.message || "An error occurred during submission");
+  }
+};
   return (
     <div className="flex-1 sticky top-0 p-5 border-l-2 border-[#0069D9]">
       <div className="flex mb-4">
@@ -226,9 +319,9 @@ function QAChecklist({
         />
         <p className="text-[#0069D9] text-xl my-5 font-extrabold">
           Checklist (
-          {hasVideo && hasBanner 
-            ? activeType === "video" ? "Video" : "Banner"
-            : type === "video" ? "Video" : "Banner"}
+          {hasVideo && hasBanner
+            ? activeType.charAt(0).toUpperCase() + activeType.slice(1)
+            : type.charAt(0).toUpperCase() + type.slice(1)}
           )
         </p>
       </div>
@@ -247,7 +340,9 @@ function QAChecklist({
           <button
             onClick={() => setActiveType("banner")}
             className={`p-2 rounded-lg text-[#0069D9] text-sm font-bold ${
-              activeType === "banner" ? "bg-[#0069D9] text-white" : "bg-gray-300"
+              activeType === "banner"
+                ? "bg-[#0069D9] text-white"
+                : "bg-gray-300"
             }`}
           >
             Banner
@@ -259,35 +354,45 @@ function QAChecklist({
         {checklist.map((item) => (
           <li key={item.id} className="mb-4">
             <p className="text-black text-sm">{item.parameter}</p>
-            <div className="flex items-center space-x-2 text-gray-400 text-sm">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={item.accepted}
-                  onChange={() => handleCheckboxChange(item.id, "accept")}
-                />
-                Accept
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={item.rejected}
-                  onChange={() => handleCheckboxChange(item.id, "reject")}
-                />
-                Reject
-              </label>
-            </div>
+            {!localApproved && (
+              <div className="flex items-center space-x-2 text-gray-400 text-sm">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={item.accepted}
+                    onChange={() => handleCheckboxChange(item.id, "accept")}
+                  />
+                  Accept
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={item.rejected}
+                    onChange={() => handleCheckboxChange(item.id, "reject")}
+                  />
+                  Reject
+                </label>
+              </div>
+            )}
           </li>
         ))}
       </ul>
-
-      <button
-        className="mt-4 border-2 rounded-lg text-md font-semibold py-1 px-4 border-[#0069D9] text-white bg-[#0069D9] hover:bg-white hover:text-[#0069D9] hover:border-[#0069D9] focus:outline-none focus:shadow-outline disabled:opacity-50"
-        disabled={!checklist.every((item) => item.accepted || item.rejected)}
-        onClick={() => setIsModalOpen(true)}
-      >
-        Submit
-      </button>
+      {localApproved ? (
+        <button
+          className="mt-4 border-2 rounded-lg text-md font-semibold py-1 px-4 border-green-600 text-white bg-green-600"
+          disabled
+        >
+          Approved
+        </button>
+      ) : (
+        <button
+          className="mt-4 border-2 rounded-lg text-md font-semibold py-1 px-4 border-[#0069D9] text-white bg-[#0069D9] hover:bg-white hover:text-[#0069D9] hover:border-[#0069D9] focus:outline-none focus:shadow-outline disabled:opacity-50"
+          disabled={!checklist.every((item) => item.accepted || item.rejected)}
+          onClick={() => setIsModalOpen(true)}
+        >
+          Submit
+        </button>
+      )}
 
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">

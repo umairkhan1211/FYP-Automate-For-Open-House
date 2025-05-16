@@ -11,50 +11,117 @@ export default function FYPPreview({
   supervisorRole,
   projectTitle,
 }) {
+  console.log(
+    "fyp preview ma supvisor id or role dekho ",
+    supervisorId,
+    supervisorRole
+  );
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(false);
   const [fypPath, setFypPath] = useState(fypDocument); // local state for FYP path
+  const [isApproved, setIsApproved] = useState(false);
+
+  useEffect(() => {
+    if (!studentId || !supervisorId) return; // guard clause
+
+    const fetchCvStatus = async () => {
+      try {
+        const response = await axios.get("/api/Status/SupFYPSubmitStatus", {
+          params: { studentId, supervisorId },
+        });
+        if (response.data?.supervisorFypReview === "approved") {
+          setIsApproved(true);
+        }
+      } catch (error) {
+        console.error("Error fetching FYP status:", error);
+      }
+    };
+
+    fetchCvStatus();
+  }, [studentId, supervisorId]);
 
   // Sync state when prop changes (e.g., after navigation)
   useEffect(() => {
     setFypPath(fypDocument);
   }, [fypDocument]);
 
-  const handleReject = async (e) => {
+  // Handle approval or rejection
+  const handleApproval = async () => {
+    try {
+      // 1. Update the supervisorCvReview status to 'Approved'
+      const response = await axios.put("/api/Status/SupFYPReview", {
+        studentId,
+        supervisorId,
+        status: "approved",
+      });
+
+      if (response?.supervisorCvReview === "approved") {
+        setIsApproved(true);
+      }
+
+      console.log("Supervisor FYP status updated to Approved");
+      setIsApproved(true); // Set to true when approved
+    } catch (error) {
+      console.error("Error updating approval status:", error);
+    }
+  };
+
+  const handleRejection = async (e) => {
     e.preventDefault();
 
-
     try {
-      const payload = {
+      // 1. Send rejection notification
+      await axios.post("/api/Notification/SupervisorNotification", {
         studentId,
-        rollNumber,
         supervisorId,
-        userRole: supervisorRole,
-        optionalMessage: reason,
+        userRole: supervisorRole, // ✅ This was missing!
+        rollNumber,
         type: "fyp",
-      };
+        optionalMessage: reason,
+      });
 
-      const response = await axios.post("/api/Notification/FYPNotification", payload);
+      // 2. Remove CV path from Upload model
+      await axios.put("/api/SupervisorDelete/RemoveFYP", {
+        studentId,
+      });
 
-      if (response.status === 201) {
-        await axios.put("/api/SupervisorDelete/RemoveFYP", {
-          studentId,
-        });
+      // Step 1: Get previewData from sessionStorage
+      const previewData = JSON.parse(sessionStorage.getItem("previewData"));
 
-        // Update state to reflect deletion instantly
-        setFypPath(null);
-        setIsModalOpen(false);
-        setReason("");
-      } else {
-        console.error("Failed to send notification:", response.data.message);
+      // Step 2: Check and nullify fypDocument
+      if (
+        previewData &&
+        previewData.fypPreviewData &&
+        previewData.fypPreviewData.length > 0
+      ) {
+        previewData.fypPreviewData[0].fypDocument = null;
+
+        // Step 3: Save back updated data to sessionStorage
+        sessionStorage.setItem("previewData", JSON.stringify(previewData));
+
+        console.log("Updated previewData:", previewData); // for debugging
       }
+
+      // 3. Update the supervisorCvReview status to 'Rejected'
+      await axios.put("/api/Status/SupFYPReview", {
+        studentId,
+        supervisorId,
+        status: "rejected",
+      });
+
+      console.log(
+        "Notification sent, FYP path removed, and status updated to Rejected"
+      );
+
+      window.location.reload(); // Refresh the page after rejection
     } catch (error) {
-      console.error("Error during rejection process:", error.response || error);
+      console.error("Error submitting rejection:", error);
     }
 
-
+    setIsModalOpen(false);
+    setReason("");
   };
 
   const handleDownload = async () => {
@@ -88,14 +155,6 @@ export default function FYPPreview({
 
   return (
     <div className="p-4 pb-24">
-      <div className="max-w-2xl mx-auto p-4">
-        <Link href="/supervisorportal/Review">
-          <button className="border-2 rounded-lg text-md font-semibold py-1 px-4 border-[#0069D9] text-[#0069D9] bg-white hover:bg-[#0069D9] hover:text-white">
-            Back
-          </button>
-        </Link>
-      </div>
-
       <h2 className="text-[#0069D9] text-center text-lg font-extrabold mb-2">
         FYP PREVIEW
       </h2>
@@ -108,58 +167,40 @@ export default function FYPPreview({
               : "FYP document is not uploaded."}
           </h3>
 
-          {fypPath && (
+          {fypPath ? (
             <button
               onClick={handleDownload}
               className="mt-2 bg-green-500 text-white px-4 py-2 rounded"
             >
               Download
             </button>
+          ) : (
+            ""
           )}
         </div>
 
-        {fypPath && (
-          <div className="flex justify-end pt-4 space-x-4">
+        {!isApproved && fypPath && (
+          <div className="flex justify-end p-6 space-x-4 mx-auto w-6/11">
             <button
+              onClick={handleApproval}
               className="bg-green-500 text-white p-3 rounded-full hover:bg-green-600"
               title="Approve"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
+              ✔️
             </button>
-
             <button
               onClick={() => setIsModalOpen(true)}
               className="bg-red-500 text-white p-3 rounded-full hover:bg-red-600"
               title="Reject"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              ❌
             </button>
+          </div>
+        )}
+
+        {isApproved && (
+          <div className="text-green-500 text-center font-bold mt-4 text-lg">
+            ✔️ Approved
           </div>
         )}
       </div>
@@ -169,57 +210,43 @@ export default function FYPPreview({
           <div className="bg-gray-200 p-6 rounded-lg max-w-md w-full relative">
             <button
               onClick={() => setIsModalOpen(false)}
-              className="absolute font-black top-2 right-2 text-gray-500 hover:text-gray-700"
+              className="absolute top-2 right-2 text-gray-700 text-xl font-bold"
             >
-              &#10005;
+              ×
             </button>
-
-            <div className="mb-4 text-sm text-gray-700 flex space-x-3">
-              <p className="bg-gray-300 rounded-full px-4 py-1 font-bold text-[#0069D9]">
-                FYP
-              </p>
-              <p className="bg-gray-300 rounded-full px-4 py-1 font-bold text-[#0069D9]">
-                {projectTitle || "Project Title Missing"}
-              </p>
+            <div className="flex space-x-2">
+              <div className="">
+                <p className="mb-2 text-[#0069D9] bg-gray-300 rounded-full p-2 text-sm font-bold">
+                  Fyp
+                </p>
+              </div>
+              <div>
+                <p className="mb-4 text-[#0069D9] bg-gray-300 rounded-full p-2 text-sm font-bold capitalize">
+                  {rollNumber}
+                </p>
+              </div>
             </div>
-
-            <h2 className="text-lg font-bold mb-4 text-[#0069D9]">
-              Reason for Rejection
+            <h2 className="text-lg font-extrabold mb-4 text-[#0069D9]">
+              Reason
             </h2>
-            <form onSubmit={handleReject}>
+            <form onSubmit={handleRejection}>
               <textarea
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="Enter your reason..."
-                className="w-full border border-gray-300 rounded p-2 mb-4 text-black"
+                placeholder="Enter reason..."
+                className="w-full border bg-gray-100 border-gray-500 rounded p-2 mb-4 text-black"
                 rows={4}
                 required
-              ></textarea>
+              />
               <div className="flex justify-end">
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 disabled:opacity-60"
+                  className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
                 >
-                  {loading ? "Submitting..." : "Submit"}
+                  Submit
                 </button>
               </div>
             </form>
-
-            <div className="mt-6 space-y-2">
-              <h3 className="text-lg font-semibold text-[#0069D9]">
-                Student Details
-              </h3>
-
-              <div className="flex justify-between text-sm text-gray-700">
-                <p>
-                  <strong>Student ID:</strong> {studentId}
-                </p>
-                <p>
-                  <strong>Roll Number:</strong> {rollNumber}
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       )}

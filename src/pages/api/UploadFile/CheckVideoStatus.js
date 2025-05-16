@@ -3,42 +3,36 @@ import User from '../../../models/User'; // Import your User model
 import Upload from '../../../models/Upload'; // Import your Upload model
 
 export default async function handler(req, res) {
-  await connect(); // Connect to the database
+  await connect();
 
-  const { userId } = req.query; // Get the userId from the query parameters
+  const { userId } = req.query;
 
   try {
-    // Fetch the logged-in user's details
     const loggedInUser = await User.findById(userId);
 
     if (!loggedInUser) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const { projectTitle } = loggedInUser;
+    const uploadData = await Upload.findOne({ user: loggedInUser._id });
 
-    // Fetch users with the same project title and role 'student'
-    const usersWithSameProjectTitle = await User.find({
-      projectTitle,
-      role: 'student',
-    });
+    let videoUrlExists = false;
+    let bannerImageExists = false;
 
-    for (const user of usersWithSameProjectTitle) {
-      // Check the Upload model for video URL and banner image file path
-      const uploadData = await Upload.findOne({ user: user._id });
+    if (uploadData && uploadData.video) {
+      if (uploadData.video.videoUrl) {
+        videoUrlExists = true;
+      }
 
-      if (uploadData && uploadData.video && uploadData.video.videoUrl) {
-        return res.status(200).json({
-          videoUrlExists: true,
-          bannerImageExists: !!uploadData.video.bannerImageFilePath,
-        });
+      if (uploadData.video.bannerImageFilePath) {
+        bannerImageExists = true;
       }
     }
 
-    // If no video URL or banner image path is found
-    return res.status(200).json({ videoUrlExists: false, bannerImageExists: false });
+    return res.status(200).json({ videoUrlExists, bannerImageExists });
+
   } catch (error) {
-    console.error('Error checking video status:', error);
-    return res.status(500).json({ message: 'Internal server error' });
+    console.error("CheckVideoStatus Error:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 }

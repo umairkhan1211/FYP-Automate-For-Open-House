@@ -9,15 +9,16 @@ export default async function handler(req, res) {
   if (method === "PUT") {
     const { studentId, supervisorId, status } = req.body;
 
-    console.log("supervisor cv review ma kya api ma ", req.body);
+    console.log("supervisor banner review ma kya api ma ", req.body);
 
     try {
-      // Find the supervisor by ID and update the supervisorCvReview status
+      // Find the supervisor by ID and update the supervisorBannerReview status
       const supervisor = await Status.findOneAndUpdate(
         { studentId, supervisorId },
         {
-          supervisorCvReview: status,
-          cvStatus: status, // ✅ Yeh bhi ab update hoga
+          supervisorBannerReview: status,
+
+          bannerStatus: status, // ✅ Yeh bhi ab update hoga
           updatedAt: new Date(),
         },
         { new: true }
@@ -31,7 +32,10 @@ export default async function handler(req, res) {
 
       return res
         .status(200)
-        .json({ message: "Supervisor CV review status updated", supervisor });
+        .json({
+          message: "Supervisor banner review status updated",
+          supervisor,
+        });
     } catch (error) {
       return res
         .status(500)

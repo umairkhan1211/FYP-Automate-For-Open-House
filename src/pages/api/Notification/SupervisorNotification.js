@@ -11,10 +11,9 @@ export default async function handler(req, res) {
         studentId = null,
         supervisorId = null,
         rollNumber = null,
-        userRole = null,
+        userRole = null, // use this
         type = null,
         optionalMessage = "",
-        supervisorRole = null,
       } = req.body;
 
       const notification = new Notification({
@@ -22,10 +21,10 @@ export default async function handler(req, res) {
         supervisorId: supervisorId || null,
         rollNumber: rollNumber || null,
         type: type || null,
-        userId: null,                 // Always null as per your request
-        userName: "",                 // Empty string
-        userRole: supervisorRole || null,
-        rejectedPoints: [],          // Empty list
+        userId: null,
+        userName: "",
+        userRole: userRole || null, // ✅ Fix here
+        rejectedPoints: [],
         optionalMessage: optionalMessage || "",
       });
 

@@ -54,7 +54,6 @@ export default function VideoUpload({ userId, rollNumber }) {
       });
 
       // Step 2: Submit Video Status Update
-      const fypStatusLoadingToastId = toast.loading("Updating Video status...");
       const submitRes = await fetch("/api/Status/VideoSubmit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -124,7 +123,7 @@ export default function VideoUpload({ userId, rollNumber }) {
       });
 
       // Step 2: Submit Banner Status Update
-      const fypStatusLoadingToastId = toast.loading("Updating FYP status...");
+     
       const submitRes = await fetch("/api/Status/BannerSubmit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

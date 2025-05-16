@@ -23,7 +23,7 @@ export async function getServerSideProps({ req }) {
 
 export default function Preview({ token }) {
   const router = useRouter();
-  const { rollNumber: queryRollNumber, studentId: queryStudentId, type: queryType , supervisorId, supervisorRole  } = router.query;
+  const { rollNumber: queryRollNumber, studentId: queryStudentId, type: queryType  } = router.query;
 
 
   const [type, setType] = useState("");
@@ -31,16 +31,49 @@ export default function Preview({ token }) {
   const [fypDocument, setFypDocument] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [bannerImage, setBannerImage] = useState("");
-  // const [supervisorId, setSupervisorId] = useState("");
-  // const [supervisorRole, setSupervisorRole] = useState("");
+  const [supervisorId, setSupervisorId] = useState("");
+  const [supervisorRole, setSupervisorRole] = useState("");
   const [studentIds, setStudentIds] = useState([]);
   const [cvFilePath, setCvFilePath] = useState("");
 
   const [studentIdOnly, setStudentIdOnly] = useState("");
   const [rollNumberOnly, setRollNumberOnly] = useState("");
 
+useEffect(() => {
+  const updatedData = sessionStorage.getItem("previewData");
+  if (updatedData) {
+    const parsed = JSON.parse(updatedData);
 
-   console.log("supervisor id or role dekha",  supervisorId , supervisorRole)
+    // Check for FYP type
+    if (parsed.type === "fyp" && parsed.fypPreviewData?.length > 0) {
+      const fypData = parsed.fypPreviewData[0];
+      if (!fypData.fypDocument) {
+        setFypDocument("");
+      }
+    }
+
+    // Check for Video type
+    if (parsed.type === "video" && parsed.videoPreviewData?.length > 0) {
+      const videoData = parsed.videoPreviewData[0];
+
+      // If videoUrl is null or empty, reflect it
+      if (!videoData.videoUrl) {
+        setVideoUrl(null); // or ""
+      } else {
+        setVideoUrl(videoData.videoUrl);
+      }
+
+      // If bannerImage is null or empty, reflect it
+      if (!videoData.bannerImage) {
+        setBannerImage(null); // or ""
+      } else {
+        setBannerImage(videoData.bannerImage);
+      }
+    }
+  }
+}, []);
+
+
 // Load preview data from sessionStorage
 useEffect(() => {
   const storedData = sessionStorage.getItem("previewData");
@@ -53,8 +86,15 @@ useEffect(() => {
     const parsed = JSON.parse(storedData);
 
     setProjectTitle(parsed.projectTitle || "");
-    setSupervisorId(parsed.supervisorId || "");
-    setSupervisorRole(parsed.supervisorRole || "");
+
+    if (parsed.supervisorId) {
+    setSupervisorId(parsed.supervisorId); // 👈 this was missing
+  }
+
+  if (parsed.supervisorRole) {
+    setSupervisorRole(parsed.supervisorRole); // 👈 this too
+  }
+ 
 
     // Set student info
     if (parsed.studentIds && parsed.studentIds.length > 0) {

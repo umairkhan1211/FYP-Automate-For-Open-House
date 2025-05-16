@@ -49,7 +49,7 @@ export default function Preview({ token, Details }) {
  useEffect(() => {
   if (Details?.userRole) {
     setuserRole(Details.userRole);
-    console.log("Set userRole:", Details.userRole);
+    console.log("Set userRole:", Details);
   }
 
   const storedData = sessionStorage.getItem("previewData");
@@ -86,6 +86,7 @@ export default function Preview({ token, Details }) {
       case "cv":
         return (
           <CVPreview
+          type={type}
             cvData={cvData}
             Details={Details}
             studentId={studentId}
@@ -96,6 +97,7 @@ export default function Preview({ token, Details }) {
       case "fyp":
         return (
           <FYPPreview
+          type={type}
             data={fypPreviewData}
              Details={Details}
             projectTitle={projectTitle}
@@ -107,6 +109,7 @@ export default function Preview({ token, Details }) {
       case "video":
         return (
           <VideoPreview
+          type={type}
             data={videoPreviewData}
              Details={Details}
             projectTitle={projectTitle}

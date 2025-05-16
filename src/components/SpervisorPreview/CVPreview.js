@@ -6,13 +6,13 @@ function CVPreview({
   cvFilePath,
   rollNumber,
   studentId,
- supervisorId,
-supervisorRole
+  supervisorId,
+  supervisorRole,
 }) {
   console.log("Props received in CVPreview:", {
     studentId,
     supervisorId,
-supervisorRole,
+    supervisorRole,
     rollNumber,
     cvFilePath,
   });
@@ -22,6 +22,29 @@ supervisorRole,
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [isApproved, setIsApproved] = useState(false); // New state for tracking approval
+
+  useEffect(() => {
+    if (!studentId || !supervisorId) return; 
+    // Fetch current CV review status from backend
+    const fetchCvStatus = async () => {
+      try {
+        const response = await axios.get("/api/Status/SupCvSubmitStatus", {
+          params: {
+            studentId,
+            supervisorId,
+          },
+        });
+
+        if (response.data?.supervisorCvReview === "approved") {
+          setIsApproved(true);
+        }
+      } catch (error) {
+        console.error("Error fetching CV status:", error);
+      }
+    };
+
+    fetchCvStatus();
+  }, [studentId, supervisorId]);
 
   useEffect(() => {
     if (cvFilePath) {
@@ -100,7 +123,7 @@ supervisorRole,
 
   return (
     <div>
-      <h2 className="font-extrabold text-base text-[#0069D9] text-center p-4">
+      <h2 className="text-[#0069D9] text-center text-lg font-extrabold mb-2">
         CV PREVIEW
       </h2>
 
@@ -134,8 +157,8 @@ supervisorRole,
           )}
 
           {isApproved && (
-            <div className="text-green-500 text-center font-bold">
-              Approved ✔️
+            <div className="text-green-500 text-center font-bold mt-4 text-lg">
+               ✔️ Approved
             </div>
           )}
         </div>
@@ -166,8 +189,8 @@ supervisorRole,
                 </p>
               </div>
             </div>
-            <h2 className="text-lg font-bold mb-4 text-[#0069D9]">
-              Reason for Rejection
+            <h2 className="text-lg font-extrabold mb-4 text-[#0069D9]">
+              Reason 
             </h2>
             <form onSubmit={handleRejection}>
               <textarea
