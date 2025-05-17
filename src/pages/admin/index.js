@@ -6,7 +6,7 @@ import AddSupervisor from '../../components/AdminPanel/AddSupervisor';
 import AddQA from '../../components/AdminPanel/AddQA';
 import AddHOD from '../../components/AdminPanel/AddHOD';
 import AddDirector from '../../components/AdminPanel/AddDirector';
-import Loader from '../../components/Loader/Loader'; // Import your Loader component
+import Loader from '../../components/Loader/Loader'; 
 import Statistics from '../../components/AdminPanel/Statistics';
 import RecordEntries from '../../components/AdminPanel/RecordEntries';
 import Cards from '../../components/AdminPanel/Cards';

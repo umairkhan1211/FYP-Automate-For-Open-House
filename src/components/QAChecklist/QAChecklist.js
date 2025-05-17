@@ -18,9 +18,6 @@ function QAChecklist({
   // Inside QAChecklist component
   const [localApproved, setLocalApproved] = useState(alreadyApproved);
 
-  console.log("detils ka data h yeah qachecklist pa" , Details , Details.userId , Details.userName )
-
-
   useEffect(() => {
     const checkApprovalStatus = async () => {
       try {
@@ -167,148 +164,149 @@ function QAChecklist({
     }
   }
 
-const handleCheckboxChange = (id, actionType) => {
-  setChecklist((prev) =>
-    prev.map((item) =>
-      item.id === id
-        ? {
-            ...item,
-            accepted: actionType === "accept" ? true : false,
-            rejected: actionType === "reject" ? true : false,
-          }
-        : item
-    )
-  );
-};
-
-
-const handleSubmit = async (e) => {
-  e.preventDefault();
-
-  const approvedPoints = checklist
-    .filter((item) => item.accepted)
-    .map((item) => item.parameter);
-
-  const rejectedPoints = checklist
-    .filter((item) => item.rejected)
-    .map((item) => item.parameter);
-
-  // Determine the final type to use
-  let finalType;
-  if (hasVideo && hasBanner) {
-    finalType = activeType;
-  } else {
-    finalType = type;
-  }
-
-  const checklistdata = {
-    studentId,
-    qaId: Details?.userId,
-    qaName: Details?.userName,
-    rollNumber,
-    type: finalType,
-    rejectedPoints,
-    approvedPoints,
-    optionalMessage: reason,
+  const handleCheckboxChange = (id, actionType) => {
+    setChecklist((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              accepted: actionType === "accept" ? true : false,
+              rejected: actionType === "reject" ? true : false,
+            }
+          : item
+      )
+    );
   };
 
-  // Build status update object with qaId and qaName
-  let statusUpdate = {
-    studentId,
-    qaId: Details?.userId,
-    qaName: Details?.userName, // Add qaName to be saved in status
-  };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  const isRejected = rejectedPoints.length > 0;
+    const approvedPoints = checklist
+      .filter((item) => item.accepted)
+      .map((item) => item.parameter);
 
-  // Determine which API endpoint to call based on type
-  let apiEndpoint = "";
-  if (finalType === "cv") {
-    statusUpdate.cvStatus = isRejected ? "rejected" : "approved";
-    statusUpdate.supervisorCvReview = isRejected ? "rejected" : "approved";
-    statusUpdate.qaCvReview = isRejected ? "rejected" : "approved";
-    apiEndpoint = "/api/Status/QaCvReview";
-  } else if (finalType === "fyp") {
-    statusUpdate.fypStatus = isRejected ? "rejected" : "approved";
-    statusUpdate.supervisorFypReview = isRejected ? "rejected" : "approved";
-    statusUpdate.qaFypReview = isRejected ? "rejected" : "approved";
-    apiEndpoint = "/api/Status/QaFypReview";
-  } else if (finalType === "video") {
-    statusUpdate.videoStatus = isRejected ? "rejected" : "approved";
-    statusUpdate.supervisorVideoReview = isRejected ? "rejected" : "approved";
-    statusUpdate.qaVideoReview = isRejected ? "rejected" : "approved";
-    apiEndpoint = "/api/Status/QaVideoReview";
-  } else if (finalType === "banner") {
-    statusUpdate.bannerStatus = isRejected ? "rejected" : "approved";
-    statusUpdate.supervisorBannerReview = isRejected ? "rejected" : "approved";
-    statusUpdate.qaBannerReview = isRejected ? "rejected" : "approved";
-    apiEndpoint = "/api/Status/QaBannerReview";
-  }
+    const rejectedPoints = checklist
+      .filter((item) => item.rejected)
+      .map((item) => item.parameter);
 
-  try {
-    // First update the status
-    const reviewRes = await fetch(apiEndpoint, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(statusUpdate),
-    });
-
-    if (!reviewRes.ok) {
-      const error = await reviewRes.json();
-      throw new Error(error.message || "Failed to update status");
+    // Determine the final type to use
+    let finalType;
+    if (hasVideo && hasBanner) {
+      finalType = activeType;
+    } else {
+      finalType = type;
     }
 
-    // Then create the checklist
-    const checklistRes = await fetch("/api/Checklist/Checklist", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(checklistdata),
-    });
+    const checklistdata = {
+      studentId,
+      qaId: Details?.userId,
+      qaName: Details?.userName,
+      rollNumber,
+      type: finalType,
+      rejectedPoints,
+      approvedPoints,
+      optionalMessage: reason,
+    };
 
-    if (!checklistRes.ok) {
-      const error = await checklistRes.json();
-      throw new Error(error.message || "Failed to create checklist");
+    // Build status update object with qaId and qaName
+    let statusUpdate = {
+      studentId,
+      qaId: Details?.userId,
+      qaName: Details?.userName, // Add qaName to be saved in status
+    };
+
+    const isRejected = rejectedPoints.length > 0;
+
+    // Determine which API endpoint to call based on type
+    let apiEndpoint = "";
+    if (finalType === "cv") {
+      statusUpdate.cvStatus = isRejected ? "rejected" : "approved";
+      statusUpdate.supervisorCvReview = isRejected ? "rejected" : "approved";
+      statusUpdate.qaCvReview = isRejected ? "rejected" : "approved";
+      apiEndpoint = "/api/Status/QaCvReview";
+    } else if (finalType === "fyp") {
+      statusUpdate.fypStatus = isRejected ? "rejected" : "approved";
+      statusUpdate.supervisorFypReview = isRejected ? "rejected" : "approved";
+      statusUpdate.qaFypReview = isRejected ? "rejected" : "approved";
+      apiEndpoint = "/api/Status/QaFypReview";
+    } else if (finalType === "video") {
+      statusUpdate.videoStatus = isRejected ? "rejected" : "approved";
+      statusUpdate.supervisorVideoReview = isRejected ? "rejected" : "approved";
+      statusUpdate.qaVideoReview = isRejected ? "rejected" : "approved";
+      apiEndpoint = "/api/Status/QaVideoReview";
+    } else if (finalType === "banner") {
+      statusUpdate.bannerStatus = isRejected ? "rejected" : "approved";
+      statusUpdate.supervisorBannerReview = isRejected
+        ? "rejected"
+        : "approved";
+      statusUpdate.qaBannerReview = isRejected ? "rejected" : "approved";
+      apiEndpoint = "/api/Status/QaBannerReview";
     }
 
-    // Handle notification if rejected
-    if (rejectedPoints.length > 0) {
-      const notificationData = {
-        ...Details,
-        studentId,
-        supervisorId,
-        rollNumber,
-        type: finalType,
-        rejectedPoints,
-        optionalMessage: reason,
-      };
-
-      await fetch("/api/Notification/Notification", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(notificationData),
+    try {
+      // First update the status
+      const reviewRes = await fetch(apiEndpoint, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(statusUpdate),
       });
 
-      // Remove the rejected item
-      const removalEndpoints = {
-        cv: "/api/SupervisorDelete/RemoveCV",
-        fyp: "/api/SupervisorDelete/RemoveFYP",
-        video: "/api/SupervisorDelete/RemoveVideoUrl",
-        banner: "/api/SupervisorDelete/RemoveBannerImage",
-      };
-
-      if (removalEndpoints[finalType]) {
-        await axios.put(removalEndpoints[finalType], { studentId });
+      if (!reviewRes.ok) {
+        const error = await reviewRes.json();
+        throw new Error(error.message || "Failed to update status");
       }
-    }
 
-    window.location.reload();
-  } catch (err) {
-    console.error("Submission error:", err);
-    alert(err.message || "An error occurred during submission");
-  }
-};
+      // Then create the checklist
+      const checklistRes = await fetch("/api/Checklist/Checklist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(checklistdata),
+      });
+
+      if (!checklistRes.ok) {
+        const error = await checklistRes.json();
+        throw new Error(error.message || "Failed to create checklist");
+      }
+
+      // Handle notification if rejected
+      if (rejectedPoints.length > 0) {
+        const notificationData = {
+          ...Details,
+          studentId,
+          supervisorId,
+          rollNumber,
+          type: finalType,
+          rejectedPoints,
+          optionalMessage: reason,
+        };
+
+        await fetch("/api/Notification/Notification", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(notificationData),
+        });
+
+        // Remove the rejected item
+        const removalEndpoints = {
+          cv: "/api/SupervisorDelete/RemoveCV",
+          fyp: "/api/SupervisorDelete/RemoveFYP",
+          video: "/api/SupervisorDelete/RemoveVideoUrl",
+          banner: "/api/SupervisorDelete/RemoveBannerImage",
+        };
+
+        if (removalEndpoints[finalType]) {
+          await axios.put(removalEndpoints[finalType], { studentId });
+        }
+      }
+
+      window.location.reload();
+    } catch (err) {
+      console.error("Submission error:", err);
+      alert(err.message || "An error occurred during submission");
+    }
+  };
   return (
     <div className="flex-1 sticky top-0 p-5 border-l-2 border-[#0069D9]">
       <div className="flex mb-4">
@@ -334,6 +332,7 @@ const handleSubmit = async (e) => {
             className={`p-2 rounded-lg text-[#0069D9] text-sm font-bold ${
               activeType === "video" ? "bg-[#0069D9] text-white" : "bg-gray-300"
             }`}
+            disabled={!hasVideo} // Disable if no video
           >
             Video
           </button>
@@ -344,6 +343,7 @@ const handleSubmit = async (e) => {
                 ? "bg-[#0069D9] text-white"
                 : "bg-gray-300"
             }`}
+            disabled={!hasBanner} // Disable if no banner
           >
             Banner
           </button>

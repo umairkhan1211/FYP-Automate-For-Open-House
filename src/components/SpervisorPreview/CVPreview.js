@@ -24,7 +24,7 @@ function CVPreview({
   const [isApproved, setIsApproved] = useState(false); // New state for tracking approval
 
   useEffect(() => {
-    if (!studentId || !supervisorId) return; 
+    if (!studentId || !supervisorId) return;
     // Fetch current CV review status from backend
     const fetchCvStatus = async () => {
       try {
@@ -158,14 +158,24 @@ function CVPreview({
 
           {isApproved && (
             <div className="text-green-500 text-center font-bold mt-4 text-lg">
-               ✔️ Approved
+              ✔️ Approved
             </div>
           )}
         </div>
       ) : (
-        <p className="text-red-500 text-center font-bold text-lg">
-          No CV uploaded
-        </p>
+        <div className="fixed  inset-0 flex items-center justify-center bg-gray-100">
+          <div className="text-center">
+            <div className="">
+              <iframe
+                src="https://lottie.host/embed/0b07dc83-ff2e-48ef-a6d7-fd9ef80ee558/OI4XmEWxva.lottie"
+                className="w-[300px] h-[300px] opacity-0 animate-fade-in mx-auto"
+              ></iframe>
+            </div>
+            <p className="text-red-500 text-center font-bold text-base capitalize">
+              No CV uploaded
+            </p>
+          </div>
+        </div>
       )}
 
       {isModalOpen && (
@@ -190,7 +200,7 @@ function CVPreview({
               </div>
             </div>
             <h2 className="text-lg font-extrabold mb-4 text-[#0069D9]">
-              Reason 
+              Reason
             </h2>
             <form onSubmit={handleRejection}>
               <textarea

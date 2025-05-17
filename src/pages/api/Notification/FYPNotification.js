@@ -1,6 +1,6 @@
-// pages/api/Notification/FYPNotification.js
 import { connect } from "../../../lib/db";
 import Notification from "../../../models/Notification";
+import User from "../../../models/User";
 
 export default async function handler(req, res) {
   await connect();
@@ -14,30 +14,40 @@ export default async function handler(req, res) {
         userRole,
         optionalMessage,
         type,
-        userId = null,
-        userName = null,
-        rejectedPoints = [],
       } = req.body;
 
-      const newNotification = new Notification({
-        studentId: studentId || null,
-        rollNumber: rollNumber || null,
-        supervisorId: supervisorId || null,
-        type: type || null,
-        userId: userId || null,
-        userName: userName || null,
-        userRole: userRole || null,
-        rejectedPoints: rejectedPoints.length
-          ? rejectedPoints
-          : ["No specific points provided"],
-        optionalMessage: optionalMessage || "",
+      // 1. Get the student's project title
+      const student = await User.findById(studentId);
+      if (!student) {
+        return res.status(404).json({ error: "Student not found" });
+      }
+      const projectTitle = student.projectTitle;
+
+      // 2. Find all students in the same project group
+      const groupMembers = await User.find({ 
+        projectTitle,
+        role: 'student'
       });
 
-      await newNotification.save();
+      // 3. Create notifications for all group members
+      const notificationPromises = groupMembers.map(async (member) => {
+        const newNotification = new Notification({
+          studentId: member._id,
+          rollNumber: member.rollNumber,
+          supervisorId,
+          type,
+          userRole,
+          rejectedPoints: [`${type} was rejected by supervisor`],
+          optionalMessage: optionalMessage || ""
+        });
+        return newNotification.save();
+      });
 
+      await Promise.all(notificationPromises);
 
       return res.status(201).json({
-        message: "FYP Notification saved successfully.",
+        message: "Notifications created for all group members",
+        count: groupMembers.length
       });
     } catch (error) {
       console.error("Notification Save Error:", error);

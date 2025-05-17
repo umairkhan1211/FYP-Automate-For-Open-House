@@ -24,7 +24,6 @@ export default async function handler(req, res) {
       return res.status(404).json({ message: "Student not found" });
     }
 
-    // Extract supervisorId and projectTitle from the student data
     const { supervisor: supervisorId, projectTitle } = student;
     console.log("Supervisor ID:", supervisorId);
     console.log("Project Title:", projectTitle);
@@ -43,38 +42,44 @@ export default async function handler(req, res) {
 
     const supervisorName = supervisor.name;
 
-    // Step 3: Check if status already exists
-    const alreadyExists = await Status.findOne({
-      studentId,
-      rollNumber,
+    // Step 3: Find all group members (students with same projectTitle)
+    const groupMembers = await User.find({ 
       projectTitle,
-      supervisorId,
-      supervisorName,
+      role: 'student'
     });
 
-    if (alreadyExists) {
-      // If the record exists and fypStatus is "uploaded", update the status only
-      if (alreadyExists.fypStatus !== "uploaded") {
-        alreadyExists.fypStatus = "uploaded"; // Update the fypStatus
-        await alreadyExists.save(); // Save the updated status
-        return res.status(200).json({ message: "FYP status updated successfully" });
+    // Step 4: Update status for all group members
+    const updatePromises = groupMembers.map(async (member) => {
+      // Check if status already exists for this member
+      const existingStatus = await Status.findOne({
+        studentId: member._id,
+        projectTitle,
+      });
+
+      if (existingStatus) {
+        // Update existing status
+        if (existingStatus.fypStatus !== "uploaded") {
+          existingStatus.fypStatus = "uploaded";
+          return existingStatus.save();
+        }
+        return Promise.resolve(); // No update needed
+      } else {
+        // Create new status
+        const newStatus = new Status({
+          studentId: member._id,
+          rollNumber: member.rollNumber,
+          projectTitle,
+          supervisorId,
+          supervisorName,
+          fypStatus: "uploaded",
+        });
+        return newStatus.save();
       }
-      return res.status(200).json({ message: "FYP status already uploaded" });
-    }
-
-    // Step 4: If status doesn't exist, create a new status entry
-    const newStatus = new Status({
-      studentId,
-      rollNumber,
-      projectTitle,
-      supervisorId,
-      supervisorName,
-      fypStatus: "uploaded",
     });
 
-    await newStatus.save();
+    await Promise.all(updatePromises);
 
-    return res.status(201).json({ message: "FYP status updated successfully" });
+    return res.status(200).json({ message: "FYP status updated for all group members" });
   } catch (error) {
     console.error("FYPSubmit error:", error);
     return res.status(500).json({ message: "Internal server error" });

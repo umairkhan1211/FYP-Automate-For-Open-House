@@ -10,7 +10,6 @@ export async function getServerSideProps({ req }) {
   const token = req.cookies.token;
 
   if (!token) {
-    console.error("No token found, redirecting to login.");
     return {
       redirect: {
         destination: "/",
@@ -19,40 +18,36 @@ export async function getServerSideProps({ req }) {
     };
   }
 
-  let userId, rollNumber;
   try {
     const userData = jwt.decode(token);
-    console.log(userData)
-    if (!userData) {
-      throw new Error("Failed to decode token");
-    }
-    userId = userData.id;
-    rollNumber = userData.rollNumber;
-  } catch (error) {
-    console.error("Token decoding failed:", error);
+    if (!userData) throw new Error("Failed to decode token");
+    
+    const userId = userData.id;
+    const rollNumber = userData.rollNumber;
+
+    // Check FYP Status
+    const fypResponse = await fetch(`http://localhost:3000/api/UploadFile/CheckFypStatus?userId=${userId}`);
+    if (!fypResponse.ok) throw new Error(`Failed to fetch FYP status`);
+    const fypData = await fypResponse.json();
+
+    // Check Video/Banner Status
+    const videoResponse = await fetch(`http://localhost:3000/api/UploadFile/CheckVideoStatus?userId=${userId}`);
+    if (!videoResponse.ok) throw new Error(`Failed to fetch video status`);
+    const videoData = await videoResponse.json();
+
     return {
-      redirect: {
-        destination: "/",
-        permanent: false,
+      props: { 
+        token, 
+        userId, 
+        rollNumber, 
+        isFypUploaded: fypData.isFypUploaded || false,
+        videoUrlExists: videoData.videoUrlExists || false,
+        bannerImageExists: videoData.bannerImageExists || false,
+        projectTitle: fypData.projectTitle || videoData.projectTitle || null
       },
     };
-  }
-
-  try {
-    const response = await fetch(`http://localhost:3000/api/UploadFile/CheckFypStatus?userId=${userId}`);
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch upload status: ${response.statusText}`);
-    }
-
-    const { isFypUploaded, projectTitle } = await response.json();
-
-    // Handle case where projectTitle is undefined
-    return {
-      props: { token, userId, rollNumber, isFypUploaded, projectTitle: projectTitle || null },  // Default projectTitle to null
-    };
   } catch (error) {
-    console.error("Error fetching data:", error);
+    console.error("Error:", error);
     return {
       redirect: {
         destination: "/",
@@ -62,19 +57,38 @@ export async function getServerSideProps({ req }) {
   }
 }
 
-
-export default function Upload({ token, userId, rollNumber, isFypUploaded, projectTitle }) {
+export default function Upload({ 
+  token, 
+  userId, 
+  rollNumber, 
+  isFypUploaded, 
+  videoUrlExists, 
+  bannerImageExists,
+  projectTitle 
+}) {
   const router = useRouter();
   const { type } = router.query;
 
   const renderUploadComponent = () => {
-    switch (type) {
+    if (!type) return null;
+    
+    switch (type.toLowerCase()) {
       case 'cv':
         return <CVUpload userId={userId} rollNumber={rollNumber} />;
       case 'fyp':
-        return <FYPUpload userId={userId} rollNumber={rollNumber} projectTitle={projectTitle} isFypUploaded={isFypUploaded} />;
+        return <FYPUpload 
+          userId={userId} 
+          rollNumber={rollNumber} 
+          projectTitle={projectTitle} 
+          isFypUploaded={isFypUploaded} 
+        />;
       case 'video':
-        return <VideoUpload userId={userId} rollNumber={rollNumber} />;
+        return <VideoUpload 
+          userId={userId} 
+          rollNumber={rollNumber} 
+          videoUrlExists={videoUrlExists} 
+          bannerImageExists={bannerImageExists} 
+        />;
       default:
         return null;
     }

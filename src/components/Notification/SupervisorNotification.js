@@ -91,7 +91,21 @@ export default function SupervisorNotification({ userId }) {
             </div>
           ))
         ) : (
-          <p className="text-center text-gray-500">No Notification Found</p>
+       <div className="fixed mt-40 inset-0 flex items-center justify-center bg-gray-100">
+          <div className="text-center">
+            <div className="">
+              <iframe
+                src="https://lottie.host/embed/7cbb68ef-5b17-4ee5-a141-4a0b46836edd/vQTXkQ9LLR.lottie"
+                className="w-[260px] h-[260px] opacity-0 animate-fade-in mx-auto"
+              ></iframe>
+            </div>
+            <div>
+              <p className="text-red-500 text-base font-bold">
+                Notifications not Found!
+              </p>
+            </div>
+          </div>
+        </div>
         )}
       </div>
     </div>

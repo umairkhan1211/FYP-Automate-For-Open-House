@@ -1,6 +1,6 @@
-// pages/api/Notification/SupervisorNotification.js
 import Notification from "../../../models/Notification";
 import { connect } from "../../../lib/db";
+import User from "../../../models/User";
 
 export default async function handler(req, res) {
   await connect();
@@ -8,31 +8,51 @@ export default async function handler(req, res) {
   if (req.method === "POST") {
     try {
       const {
-        studentId = null,
-        supervisorId = null,
-        rollNumber = null,
-        userRole = null, // use this
-        type = null,
+        studentId,
+        supervisorId,
+        rollNumber,
+        userRole,
+        type,
         optionalMessage = "",
       } = req.body;
 
-      const notification = new Notification({
-        studentId: studentId || null,
-        supervisorId: supervisorId || null,
-        rollNumber: rollNumber || null,
-        type: type || null,
-        userId: null,
-        userName: "",
-        userRole: userRole || null, // ✅ Fix here
-        rejectedPoints: [],
-        optionalMessage: optionalMessage || "",
+      // 1. Get the student's project title
+      const student = await User.findById(studentId);
+      if (!student) {
+        return res.status(404).json({ error: "Student not found" });
+      }
+      const projectTitle = student.projectTitle;
+
+      // 2. Find all students in the same project group
+      const groupMembers = await User.find({ 
+        projectTitle,
+        role: 'student'
       });
 
-      await notification.save();
-      res.status(201).json({ message: "Notification created successfully" });
+      // 3. Create notifications for all group members
+      const notificationPromises = groupMembers.map(async (member) => {
+        const notification = new Notification({
+          studentId: member._id,
+          supervisorId,
+          rollNumber: member.rollNumber,
+          type,
+          userRole,
+          rejectedPoints: ["FYP document was rejected by supervisor"],
+          optionalMessage
+        });
+        return notification.save();
+      });
+
+      await Promise.all(notificationPromises);
+
+      res.status(201).json({ 
+        message: "Notifications created for all group members",
+        count: groupMembers.length
+      });
+
     } catch (error) {
-      console.error("🔴 Error creating notification:", error);
-      res.status(500).json({ error: "Error creating notification" });
+      console.error("Error creating notifications:", error);
+      res.status(500).json({ error: "Error creating notifications" });
     }
   } else {
     res.status(405).json({ error: "Method not allowed" });

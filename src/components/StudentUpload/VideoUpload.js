@@ -1,105 +1,60 @@
-import Link from "next/link";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import toast from "react-hot-toast";
 
-export default function VideoUpload({ userId, rollNumber }) {
+export default function VideoUpload({ 
+  userId, 
+  rollNumber, 
+  videoUrlExists: initialVideoUrlExists, 
+  bannerImageExists: initialBannerImageExists 
+}) {
   const [videoUrl, setVideoUrl] = useState("");
   const [thumbnail, setThumbnail] = useState(null);
-  const [statusChecked, setStatusChecked] = useState(false);
-  const [videoUrlExists, setVideoUrlExists] = useState(false);
-  const [bannerImageExists, setBannerImageExists] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [uploadMessage, setUploadMessage] = useState("");
-
-  useEffect(() => {
-    const checkStatus = async () => {
-      if (!userId) return;
-
-      try {
-        const response = await fetch(
-          `/api/UploadFile/CheckVideoStatus?userId=${encodeURIComponent(userId)}`
-        );
-        const data = await response.json();
-        if (response.ok) {
-          setVideoUrlExists(data.videoUrlExists);
-          setBannerImageExists(data.bannerImageExists);
-        } else {
-          console.error("Error checking status:", data.message);
-        }
-      } catch (error) {
-        console.error("Error checking status:", error);
-      } finally {
-        setStatusChecked(true); // Set status to checked after the operation completes
-      }
-    };
-
-    checkStatus();
-  }, [userId]);
+  const [videoUrlExists, setVideoUrlExists] = useState(initialVideoUrlExists);
+  const [bannerImageExists, setBannerImageExists] = useState(initialBannerImageExists);
 
   const handleVideoSubmit = async (e) => {
     e.preventDefault();
-    const loadingToast = toast.loading("Uploading video...");
+    if (!videoUrl) return;
 
+    const loadingToast = toast.loading("Uploading video...");
     try {
-      // Step 1: Upload Video
       const formData = new FormData();
       formData.append("videoUrl", videoUrl);
       formData.append("fileType", "video");
       formData.append("userId", userId);
       formData.append("rollNumber", rollNumber);
 
-      const response = await fetch("/api/UploadFile/Upload", {
+      // Upload video
+      const uploadRes = await fetch("/api/UploadFile/Upload", {
         method: "POST",
         body: formData,
       });
 
-      // Step 2: Submit Video Status Update
-      const submitRes = await fetch("/api/Status/VideoSubmit", {
+      if (!uploadRes.ok) throw new Error("Video upload failed");
+
+      // Update status
+      const statusRes = await fetch("/api/Status/VideoSubmit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          studentId: userId,
-          rollNumber,
-        }),
+        body: JSON.stringify({ studentId: userId, rollNumber }),
       });
 
-      const submitData = await submitRes.json();
-      if (!submitRes.ok) {
-        throw new Error(submitData.message || "Failed to update Video status");
+      if (!statusRes.ok) throw new Error("Status update failed");
+
+      // Notification cleanup if first upload
+      if (!initialVideoUrlExists) {
+        await fetch("/api/SupervisorDelete/RemoveVideoNotification", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ studentId: userId, rollNumber }),
+        });
       }
-     
 
-      setIsSubmitted(true);
-      setUploadMessage("FYP document submitted successfully");
-
-      // Step 3: Handle Video Upload Response
-      const data = await response.json();
-      if (response.ok) {
-        toast.success("Video uploaded!");
-
-        // Only hit notification delete if videoUrl wasn't already uploaded
-        if (!videoUrlExists) {
-          const deleteVideoNotification = await fetch("/api/SupervisorDelete/RemoveVideoNotification", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ studentId: userId, rollNumber }),
-          });
-
-          const videoData = await deleteVideoNotification.json();
-          if (deleteVideoNotification.ok) {
-            console.log("Video Notification Deleted:", videoData.message);
-          } else {
-            console.warn("Video Notification Delete Failed:", videoData.message);
-          }
-        }
-
-        setVideoUrlExists(true); // Update state after success
-      } else {
-        toast.error(data.error || "Video upload failed!");
-      }
+      setVideoUrlExists(true);
+      toast.success("Video uploaded successfully!");
     } catch (error) {
-      toast.error("Error uploading video.");
       console.error(error);
+      toast.error(error.message || "Video upload failed");
     } finally {
       toast.dismiss(loadingToast);
     }
@@ -107,75 +62,51 @@ export default function VideoUpload({ userId, rollNumber }) {
 
   const handleBannerSubmit = async (e) => {
     e.preventDefault();
-    const loadingToast = toast.loading("Uploading banner...");
+    if (!thumbnail) return;
 
+    const loadingToast = toast.loading("Uploading banner...");
     try {
-      // Step 1: Upload Banner
       const formData = new FormData();
       formData.append("videoThumbnail", thumbnail);
       formData.append("fileType", "video");
       formData.append("userId", userId);
       formData.append("rollNumber", rollNumber);
 
-      const response = await fetch("/api/UploadFile/Upload", {
+      // Upload banner
+      const uploadRes = await fetch("/api/UploadFile/Upload", {
         method: "POST",
         body: formData,
       });
 
-      // Step 2: Submit Banner Status Update
-     
-      const submitRes = await fetch("/api/Status/BannerSubmit", {
+      if (!uploadRes.ok) throw new Error("Banner upload failed");
+
+      // Update status
+      const statusRes = await fetch("/api/Status/BannerSubmit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          studentId: userId,
-          rollNumber,
-        }),
+        body: JSON.stringify({ studentId: userId, rollNumber }),
       });
 
-      const submitData = await submitRes.json();
-      if (!submitRes.ok) {
-        throw new Error(submitData.message || "Failed to update Banner status");
+      if (!statusRes.ok) throw new Error("Status update failed");
+
+      // Notification cleanup if first upload
+      if (!initialBannerImageExists) {
+        await fetch("/api/SupervisorDelete/RemoveBannerNotification", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ studentId: userId, rollNumber }),
+        });
       }
-    
 
-      setIsSubmitted(true);
-      setUploadMessage("FYP document submitted successfully");
-
-      // Step 3: Handle Banner Upload Response
-      const data = await response.json();
-      if (response.ok) {
-        toast.success("Banner uploaded!");
-
-        // Only hit banner delete API if not already uploaded
-        if (!bannerImageExists) {
-          const deleteBannerNotification = await fetch("/api/SupervisorDelete/RemoveBannerNotification", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ studentId: userId, rollNumber }),
-          });
-
-          const bannerData = await deleteBannerNotification.json();
-          if (deleteBannerNotification.ok) {
-            console.log("Banner Notification Deleted:", bannerData.message);
-          } else {
-            console.warn("Banner Notification Delete Failed:", bannerData.message);
-          }
-        }
-
-        setBannerImageExists(true); // Update state after success
-      } else {
-        toast.error(data.error || "Banner upload failed!");
-      }
+      setBannerImageExists(true);
+      toast.success("Banner uploaded successfully!");
     } catch (error) {
-      toast.error("Error uploading banner.");
       console.error(error);
+      toast.error(error.message || "Banner upload failed");
     } finally {
       toast.dismiss(loadingToast);
     }
   };
-
-  if (!statusChecked) return <p>Loading...</p>;
 
   return (
     <div className="p-10">
@@ -223,13 +154,7 @@ export default function VideoUpload({ userId, rollNumber }) {
                 <input
                   type="file"
                   accept=".jpg"
-                  onChange={(e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                      setThumbnail(file);
-                      toast.success("Image selected!");
-                    }
-                  }}
+                  onChange={(e) => setThumbnail(e.target.files[0] || null)}
                   className="w-full p-2 border border-gray-300 rounded mb-2"
                 />
                 <button

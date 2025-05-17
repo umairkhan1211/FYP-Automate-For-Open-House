@@ -76,7 +76,7 @@ export default function FYPPreview({
       await axios.post("/api/Notification/SupervisorNotification", {
         studentId,
         supervisorId,
-        userRole: supervisorRole, // ✅ This was missing!
+        userRole: supervisorRole,
         rollNumber,
         type: "fyp",
         optionalMessage: reason,
@@ -159,51 +159,61 @@ export default function FYPPreview({
         FYP PREVIEW
       </h2>
 
-      <div className="max-w-2xl mx-auto p-4">
-        <div className="bg-gray-100 border-2 border-[#0069D9] rounded-lg p-6 space-y-4">
-          <h3 className="text-base font-semibold text-[#0069D9]">
-            {fypPath
-              ? "Click the download button to preview the document"
-              : "FYP document is not uploaded."}
-          </h3>
+      {!fypPath ? (
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-100">
+          <div className="text-center">
+            <div className="">
+              <iframe
+                src="https://lottie.host/embed/0f81bb96-9e62-45af-bc62-e1817447056c/mslEqpcA5P.lottie"
+                className="w-[180px] h-[180px] opacity-0 animate-fade-in mx-auto"
+              ></iframe>
+            </div>
+            <p className="text-red-500 text-center font-bold text-base mt-6 capitalize ">
+              FYP document is not uploaded
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="max-w-2xl mx-auto p-4">
+          <div className="bg-gray-100 rounded-lg p-6 space-y-4">
+            <h3 className="text-base font-semibold text-[#0069D9]">
+              Click the download button to preview the document
+            </h3>
 
-          {fypPath ? (
             <button
               onClick={handleDownload}
               className="mt-2 bg-green-500 text-white px-4 py-2 rounded"
             >
               Download
             </button>
-          ) : (
-            ""
+          </div>
+
+          {!isApproved && (
+            <div className="flex justify-end p-6 space-x-4 mx-auto w-6/11">
+              <button
+                onClick={handleApproval}
+                className="bg-green-500 text-white p-3 rounded-full hover:bg-green-600"
+                title="Approve"
+              >
+                ✔️
+              </button>
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="bg-red-500 text-white p-3 rounded-full hover:bg-red-600"
+                title="Reject"
+              >
+                ❌
+              </button>
+            </div>
+          )}
+
+          {isApproved && (
+            <div className="text-green-500 text-center font-bold mt-4 text-lg">
+              ✔️ Approved
+            </div>
           )}
         </div>
-
-        {!isApproved && fypPath && (
-          <div className="flex justify-end p-6 space-x-4 mx-auto w-6/11">
-            <button
-              onClick={handleApproval}
-              className="bg-green-500 text-white p-3 rounded-full hover:bg-green-600"
-              title="Approve"
-            >
-              ✔️
-            </button>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="bg-red-500 text-white p-3 rounded-full hover:bg-red-600"
-              title="Reject"
-            >
-              ❌
-            </button>
-          </div>
-        )}
-
-        {isApproved && (
-          <div className="text-green-500 text-center font-bold mt-4 text-lg">
-            ✔️ Approved
-          </div>
-        )}
-      </div>
+      )}
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

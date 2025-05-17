@@ -94,7 +94,7 @@ const isFormValid = () => {
   return (
     <div className="p-16 text-left">
       <div className="max-w-2xl mx-auto p-6 border-2 border-[#0069D9] rounded">
-        <h2 className="text-xl font-bold mb-4">{projectTitle}</h2>
+    
         {isFypUploaded ? (
           <div className="text-green-600 font-semibold text-center">
             Congratulations, Already FYP Document Uploaded by your Group Member
