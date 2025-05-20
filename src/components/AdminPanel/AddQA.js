@@ -74,7 +74,7 @@ function AddQA({ darkMode }) {
             ADD QUALITY MEMBER
           </h1>
         </div>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 text-black">
           <div>
             <input
               {...register("name", {

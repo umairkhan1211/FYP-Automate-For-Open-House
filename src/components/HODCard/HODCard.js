@@ -1,41 +1,44 @@
 import React from 'react'
 import HODCarditem from '../../components/HODCard/HODCarditem';
 
-function HODCard({ projectCount = 0 }) {
+function HODCard({ 
+  projectCount = 0, 
+  approvedCount = { totalApproved: 0, details: { supervisor: 0, qa: 0 } }, 
+  rejectedCount = { totalRejected: 0, details: { supervisor: 0, qa: 0 } }, 
+  pendingCount = { totalPending: 0, details: { supervisor: 0, qa: 0 } } 
+}) {
   const carddata = [
     {
       name: 'TOTAL PROJECTS',
       icon: "bi-shield-fill-check",
       value: projectCount,
-      details: [
-     
-      ]
+      details: []
     },
     {
       name: 'TOTAL APPROVED',
       icon: "bi-send-check-fill",
-      value: Math.floor(projectCount * 0.3), // Example calculation
+      value: approvedCount.totalApproved || 0,
       details: [
-        { label: 'Supervisor', value: Math.floor(projectCount * 0.2) },
-        { label: 'QA', value: Math.floor(projectCount * 0.1) }
+        { label: 'Supervisor', value: approvedCount.details?.supervisor || 0 },
+        { label: 'QA', value: approvedCount.details?.qa || 0 }
       ]
     },
     {
       name: 'TOTAL REJECTED',
       icon: "bi-file-earmark-x-fill",
-      value: Math.floor(projectCount * 0.1), // Example calculation
+      value: rejectedCount.totalRejected || 0,
       details: [
-        { label: 'Supervisor', value: Math.floor(projectCount * 0.06) },
-        { label: 'QA', value: Math.floor(projectCount * 0.04) }
+        { label: 'Supervisor', value: rejectedCount.details?.supervisor || 0 },
+        { label: 'QA', value: rejectedCount.details?.qa || 0 }
       ]
     },
     {
       name: 'TOTAL PENDING',
       icon: "bi-hourglass-split",
-      value: projectCount - Math.floor(projectCount * 0.3) - Math.floor(projectCount * 0.1),
+      value: pendingCount.totalPending || 0,
       details: [
-        { label: 'Supervisor', value: Math.floor(projectCount * 0.14) },
-        { label: 'QA', value: projectCount - Math.floor(projectCount * 0.3) - Math.floor(projectCount * 0.1) - Math.floor(projectCount * 0.14) }
+        { label: 'Supervisor', value: pendingCount.details?.supervisor || 0 },
+        { label: 'QA', value: pendingCount.details?.qa || 0 }
       ]
     }
   ];

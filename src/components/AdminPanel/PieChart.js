@@ -1,13 +1,38 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Title from './Title';
 import { Cell, Legend, Pie, PieChart as RechartsPieChart, ResponsiveContainer, Tooltip } from 'recharts';
+import axios from 'axios';
 
-function PieChart({ darkMode }) {
-  const data = [
-    { name: 'Approved', value: 10, color: darkMode ? '#BEBEBE' : '#0069D9' },
-    { name: 'Rejected', value: 4, color: darkMode ? '#66a5e8' : '#BEBEBE' },
-    { name: 'Pending', value: 6, color: darkMode ? '#0069D9' : '#66a5e8' }
-  ];
+function PieChart({ token, darkMode }) {
+  const [data, setData] = useState([
+    { name: 'Approved', value: 0, color: darkMode ? '#BEBEBE' : '#0069D9' },
+    { name: 'Rejected', value: 0, color: darkMode ? '#66a5e8' : '#BEBEBE' },
+    { name: 'Pending', value: 0, color: darkMode ? '#0069D9' : '#66a5e8' }
+  ]);
+
+useEffect(() => {
+  const fetchProjectStats = async () => {
+    try {
+       const response = await axios.get('/api/director/PieChart', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+      
+      const { approvedProjects, rejectedProjects, pendingProjects } = response.data;
+      
+      setData([
+        { name: 'Approved', value: approvedProjects, color: darkMode ? '#BEBEBE' : '#0069D9' },
+        { name: 'Rejected', value: rejectedProjects, color: darkMode ? '#66a5e8' : '#BEBEBE' },
+        { name: 'Pending', value: pendingProjects, color: darkMode ? '#0069D9' : '#66a5e8' }
+      ]);
+    } catch (error) {
+      console.error('Error fetching project stats:', error);
+    }
+  };
+
+  fetchProjectStats();
+}, [token, darkMode]);
 
   return (
     <div className="h-[400px] w-full rounded-xl p-5 pb-20 dark:bg-slate-800 dark:text-white transition-all duration-300">

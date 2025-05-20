@@ -23,7 +23,7 @@ export async function getServerSideProps({ req }) {
 
 export default function Preview({ token }) {
   const router = useRouter();
-  const { rollNumber: queryRollNumber, studentId: queryStudentId, type: queryType  } = router.query;
+  const { rollNumber: queryRollNumber, studentId: queryStudentId, type: queryType , supervisorId:querySupervisorId , supervisorRole:querysupervisorRole  } = router.query;
 
 
   const [type, setType] = useState("");
@@ -88,13 +88,12 @@ useEffect(() => {
     setProjectTitle(parsed.projectTitle || "");
 
     if (parsed.supervisorId) {
-    setSupervisorId(parsed.supervisorId); // 👈 this was missing
-  }
+      setSupervisorId(parsed.supervisorId);
+    }
 
-  if (parsed.supervisorRole) {
-    setSupervisorRole(parsed.supervisorRole); // 👈 this too
-  }
- 
+    if (parsed.supervisorRole) {
+      setSupervisorRole(parsed.supervisorRole);
+    }
 
     // Set student info
     if (parsed.studentIds && parsed.studentIds.length > 0) {
@@ -105,17 +104,17 @@ useEffect(() => {
     }
 
     // Set type
-   if (!queryType && parsed.type) {
+    if (!queryType && parsed.type) {
       setType(parsed.type);
     }
 
-    // ✅ Set FYP Document Path from preview data
+    // Set FYP Document Path from preview data
     if (parsed.type === "fyp" && parsed.fypPreviewData && parsed.fypPreviewData.length > 0) {
       const fypData = parsed.fypPreviewData[0];
       setFypDocument(fypData.fypDocument || "");
     }
 
-    // 🟢 Extract videoUrl and bannerImage from videoPreviewData[0]
+    // Extract videoUrl and bannerImage from videoPreviewData[0]
     if (parsed.type === "video" && parsed.videoPreviewData && parsed.videoPreviewData.length > 0) {
       const videoData = parsed.videoPreviewData[0];
       setVideoUrl(videoData.videoUrl || "");
@@ -123,7 +122,6 @@ useEffect(() => {
     }
   }
 }, [queryType]);
-
 
   // Fetch CV if type is cv
   useEffect(() => {
@@ -147,8 +145,8 @@ useEffect(() => {
           <CVPreview
             rollNumber={queryRollNumber}
             studentId={queryStudentId}
-            supervisorId={supervisorId}
-            supervisorRole={supervisorRole}
+            supervisorId={querySupervisorId}
+            supervisorRole={querysupervisorRole}
             cvFilePath={cvFilePath}
           />
         );

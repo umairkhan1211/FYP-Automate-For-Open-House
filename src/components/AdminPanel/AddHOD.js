@@ -76,7 +76,7 @@ function AddHOD({ darkMode }) {
             ADD HEAD OF DEPARTMENT
           </h1>
         </div>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 text-black">
           <div>
             <input
               {...register("name", {

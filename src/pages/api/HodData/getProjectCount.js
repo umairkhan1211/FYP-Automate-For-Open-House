@@ -1,5 +1,6 @@
 import User from '../../../models/User';
-import {connect} from '../../../lib/db';
+import { connect } from '../../../lib/db';
+import { getRelatedDepartments } from '../../../../utils/departmentHelper';
 
 export default async function handler(req, res) {
   await connect();
@@ -11,9 +12,11 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, message: 'Department is required' });
     }
 
-    // Get all students in the specified department with project titles
+    const relatedDepartments = getRelatedDepartments(department);
+
+    // Get all students in the related departments with project titles
     const students = await User.find({
-      department: department,
+      department: { $in: relatedDepartments },
       role: 'student',
       projectTitle: { $exists: true, $ne: '' }
     });
