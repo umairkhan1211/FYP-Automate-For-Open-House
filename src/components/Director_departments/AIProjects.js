@@ -1,6 +1,6 @@
 // components/Director_departments/ComputerScienceProjects.js
 import React, { useEffect, useState } from 'react';
-import ProjectsTable from '../HODCard/ProjectsTable';
+import ProjectsTable from '../../components/Director_departments/ProjectsTable';
 
 const AIProjects = ({ token }) => {
   const [projects, setProjects] = useState([]);
@@ -10,7 +10,7 @@ const AIProjects = ({ token }) => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await fetch('/api/director/getProjectsByDepartment?department=Computer Science', {
+        const response = await fetch('/api/director/getProjectsByDepartment?department=AI', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         
@@ -31,9 +31,9 @@ const AIProjects = ({ token }) => {
     fetchProjects();
   }, [token]);
 
-  if (loading) return <div className="text-center py-4">Loading computer science projects...</div>;
+  if (loading) return <div className="text-center py-4 text-red-500 font-bold">Loading AI Projects...</div>;
   if (error) return <div className="text-center py-4 text-red-500">{error}</div>;
-  if (projects.length === 0) return <div className="text-center py-4">No computer science projects found</div>;
+  if (projects.length === 0) return <div className="text-center py-4 text-red-500 font-bold">No AI Projects Found</div>;
 
   return <ProjectsTable projects={projects} />;
 };

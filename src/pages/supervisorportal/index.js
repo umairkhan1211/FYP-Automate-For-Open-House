@@ -41,6 +41,7 @@ export async function getServerSideProps({ req }) {
 function Index({ token, supervisorData }) {
   const [showUpload, setShowUpload] = useState(true);
   const [studentGroups, setStudentGroups] = useState([]);
+    const [notificationCount, setNotificationCount] = useState(0);
 
   useEffect(() => {
     const fetchStudents = async () => {
@@ -66,7 +67,19 @@ function Index({ token, supervisorData }) {
       }
     };
 
+    const fetchNotificationCount = async () => {
+      try {
+        const response = await axios.get(
+          `/api/Notification/FetchNotification?userId=${supervisorData.id}&role=supervisor`
+        );
+        setNotificationCount(response.data.notifications.length);
+      } catch (error) {
+        console.error("Error fetching notifications:", error);
+      }
+    };
+
     fetchStudents();
+    fetchNotificationCount();
   }, [supervisorData]);
 
   const splitTitle = (title) => {
@@ -184,13 +197,19 @@ function Index({ token, supervisorData }) {
           </button>
           <button
             onClick={() => setShowUpload(false)}
-            className={`border-2 rounded-lg text-md font-semibold py-1 px-2 ${
+            className={`border-2 rounded-lg text-md font-semibold py-1 px-2 relative ${
               !showUpload
                 ? "bg-[#0069D9] text-white border-[#0069D9]"
                 : "border-[#0069D9] text-[#0069D9] bg-white hover:bg-[#0069D9] hover:text-white hover:border-white"
             }`}
           >
             Notification
+            {/* Notification badge */}
+            {notificationCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                {notificationCount}
+              </span>
+            )}
           </button>
         </div>
 
@@ -211,7 +230,7 @@ function Index({ token, supervisorData }) {
             )}
           </div>
         ) : (
-          <SupervisorNotification userId={supervisorData.id} />
+          <SupervisorNotification userId={supervisorData.id}   updateNotificationCount={setNotificationCount}  />
         )}
       </div>
     </Layout>

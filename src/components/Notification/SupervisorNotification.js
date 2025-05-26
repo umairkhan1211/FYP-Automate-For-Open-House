@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-export default function SupervisorNotification({ userId }) {
+export default function SupervisorNotification({ userId, updateNotificationCount }) {
   const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
@@ -11,16 +11,17 @@ export default function SupervisorNotification({ userId }) {
           `/api/Notification/FetchNotification?userId=${userId}&role=supervisor`
         );
         setNotifications(response.data.notifications);
+        // Update parent with notification count
+        updateNotificationCount(response.data.notifications.length);
       } catch (error) {
         console.error("Error fetching notifications:", error);
       }
     };
 
     if (userId) {
-      // Ensure userId is defined
       fetchNotifications();
     }
-  }, [userId]);
+  }, [userId, updateNotificationCount]);
 
   return (
     <div className="container h-full w-full mx-auto">

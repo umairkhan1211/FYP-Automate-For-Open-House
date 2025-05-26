@@ -24,7 +24,9 @@ function AddStudent({ darkMode }) {
   useEffect(() => {
     const fetchSupervisors = async () => {
       try {
-        const response = await axios.get("/api/FetchRecords/GetSupervisorDropdown");
+        const response = await axios.get(
+          "/api/FetchRecords/GetSupervisorDropdown"
+        );
         setSupervisors(response.data);
       } catch (error) {
         console.error("Failed to fetch supervisors", error);
@@ -242,12 +244,21 @@ function AddStudent({ darkMode }) {
               <option value="">Select Department</option>
               <option value="Computer Science">Computer Science</option>
               <option value="Software Engineering">Software Engineering</option>
+              <option value="AI">
+                AI
+              </option>
               <option value="Civil Engineering">Civil Engineering</option>
               <option value="Mechanical Engineering">
                 Mechanical Engineering
               </option>
-              <option value="Business Administration">
-                Business Administration
+              <option value="Electrical Engineering">
+                Electrical Engineering
+              </option>
+              <option value="Computer Engineering">
+                Computer Engineering
+              </option>
+              <option value="Management Science">
+               Management Science
               </option>
             </select>
             {errors.department && (

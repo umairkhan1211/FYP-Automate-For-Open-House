@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-export default function StudentNotification({ userId }) {
+export default function StudentNotification({ userId, updateNotificationCount }) {
   const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
@@ -11,6 +11,7 @@ export default function StudentNotification({ userId }) {
           `/api/Notification/FetchNotification?userId=${userId}&role=student`
         );
         setNotifications(response.data.notifications);
+        updateNotificationCount(response.data.notifications.length);
       } catch (error) {
         console.error("Error fetching notifications:", error);
       }
@@ -19,7 +20,7 @@ export default function StudentNotification({ userId }) {
     if (userId) {
       fetchNotifications();
     }
-  }, [userId]);
+  }, [userId, updateNotificationCount]);
 
   return (
     <div className="container h-full w-full mx-auto">
@@ -39,9 +40,6 @@ export default function StudentNotification({ userId }) {
                     {/* FROM Header */}
                     <div className="flex justify-between mb-1">
                       <div className="flex items-center mb-2 ">
-                        {/* <h3 className="text-lg capitalize text-white font-extrabold">
-                        
-                        </h3> */}
                         <span className="capitalize text-xl ml-2 font-extrabold text-white">
                           {notification.userRole}
                           {isSupervisor ? "" : " Team"}
@@ -96,21 +94,19 @@ export default function StudentNotification({ userId }) {
               );
             })
           ) : (
-             <div className="fixed mt-40 inset-0 flex items-center justify-center bg-gray-100">
-          <div className="text-center">
-            <div className="">
-              <iframe
-                src="https://lottie.host/embed/7cbb68ef-5b17-4ee5-a141-4a0b46836edd/vQTXkQ9LLR.lottie"
-                className="w-[260px] h-[260px] opacity-0 animate-fade-in mx-auto"
-              ></iframe>
-              <p className="text-red-500 text-base font-bold">
-                Notifications not Found!
-              </p>
+            <div className="fixed mt-40 inset-0 flex items-center justify-center bg-gray-100">
+              <div className="text-center">
+                <div className="">
+                  <iframe
+                    src="https://lottie.host/embed/7cbb68ef-5b17-4ee5-a141-4a0b46836edd/vQTXkQ9LLR.lottie"
+                    className="w-[260px] h-[260px] opacity-0 animate-fade-in mx-auto"
+                  ></iframe>
+                  <p className="text-red-500 text-base font-bold">
+                    Notifications not Found!
+                  </p>
+                </div>
+              </div>
             </div>
-            <div>
-            </div>
-          </div>
-        </div>
           )}
         </div>
       </div>

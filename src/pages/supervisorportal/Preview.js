@@ -39,6 +39,8 @@ export default function Preview({ token }) {
   const [studentIdOnly, setStudentIdOnly] = useState("");
   const [rollNumberOnly, setRollNumberOnly] = useState("");
 
+
+
 useEffect(() => {
   const updatedData = sessionStorage.getItem("previewData");
   if (updatedData) {
@@ -116,9 +118,14 @@ useEffect(() => {
 
     // Extract videoUrl and bannerImage from videoPreviewData[0]
     if (parsed.type === "video" && parsed.videoPreviewData && parsed.videoPreviewData.length > 0) {
-      const videoData = parsed.videoPreviewData[0];
-      setVideoUrl(videoData.videoUrl || "");
-      setBannerImage(videoData.bannerImage || "");
+       const studentWithVideo = parsed.videoPreviewData.find(
+        student => student.videoUrl 
+      );
+      const studentWithbanner =parsed.videoPreviewData.find(
+        (student) => student.bannerImage
+      );
+      setVideoUrl(studentWithVideo.videoUrl || "");
+      setBannerImage(studentWithbanner.bannerImage || "");
     }
   }
 }, [queryType]);

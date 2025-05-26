@@ -1,6 +1,6 @@
 // components/Director_departments/ComputerScienceProjects.js
 import React, { useEffect, useState } from 'react';
-import ProjectsTable from '../HODCard/ProjectsTable';
+import ProjectsTable from '../../components/Director_departments/ProjectsTable';
 
 const ComputerScienceProjects = ({ token }) => {
   const [projects, setProjects] = useState([]);

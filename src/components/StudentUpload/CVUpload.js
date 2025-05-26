@@ -260,28 +260,9 @@ export default function CVUpload({ userId, rollNumber }) {
       <h2 className="font-extrabold text-base text-[#0069D9] p-4 text-center">
         CV UPLOAD
       </h2>
-      {uploadMessage && (
+     {uploadMessage && (
         <div className="text-center text-green-600 font-bold mb-4">
           {uploadMessage}
-        </div>
-      )}
-
-      {templateFile && (
-        <div className="mb-4 p-4 bg-blue-50 rounded-lg">
-          <h3 className="font-bold text-blue-800 mb-2">CV Template</h3>
-          <div className="flex items-center justify-between">
-            <span>{templateFile.fileName}</span>
-            <button
-              onClick={handleDownloadTemplate}
-              className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
-              disabled={isLoading}
-            >
-              Download Template
-            </button>
-          </div>
-          <p className="text-sm text-gray-600 mt-2">
-            Valid until: {new Date(templateFile.expiryDate).toLocaleString()}
-          </p>
         </div>
       )}
 
@@ -296,7 +277,8 @@ export default function CVUpload({ userId, rollNumber }) {
             <tr className="text-sm md:text-base font-semibold text-center bg-[#0069D9] text-white dark:bg-white dark:text-[#0069D9]">
               <th className="px-4 py-3">CV</th>
               <th className="px-4 py-3">Upload Date</th>
-              <th className="px-4 py-3">Expired Date</th>
+              <th className="px-4 py-3">Expiry Date</th>
+              <th className="px-4 py-3">Download Template</th>
               <th className="px-4 py-3">Upload</th>
               <th className="px-4 py-3">Submit</th>
             </tr>
@@ -306,15 +288,26 @@ export default function CVUpload({ userId, rollNumber }) {
               <td className="px-4 py-3 font-medium">
                 <i className="bi bi-file-earmark-fill text-[#0069D9] text-3xl bg-white rounded-full p-2"></i>
               </td>
-              <td className="px-4 py-3 font-medium">
-                {templateFile ? new Date(templateFile.startDate).toLocaleDateString() : "N/A"}
+              <td className="px-4 py-3 font-bold text-[#0069D9] text-xs ">
+                {templateFile ? new Date(templateFile.createdAt).toLocaleString() : "N/A"}
+              </td>
+              <td className="px-4 py-3 font-bold text-[#0069D9] text-xs">
+                {templateFile ? new Date(templateFile.expiryDate).toLocaleString() : "N/A"}
               </td>
               <td className="px-4 py-3 font-medium">
-                {templateFile ? new Date(templateFile.endDate).toLocaleDateString() : "N/A"}
+                {templateFile && (
+                  <button
+                    onClick={handleDownloadTemplate}
+                    className="p-2 rounded-full text-[#0069D9] bg-gray-300 hover:bg-gray-400 transition-all duration-200"
+                    disabled={!templateFile}
+                  >
+                    <i className="bi bi-download text-xl font-bold"></i>
+                  </button>
+                )}
               </td>
               <td className="px-4 py-3 font-medium flex flex-col items-center justify-center">
                 {isSubmitted ? (
-                  <span className="text-green-600 font-bold text-center">
+                  <span className="text-green-600 font-bold text-center py-5">
                     Submitted
                   </span>
                 ) : (

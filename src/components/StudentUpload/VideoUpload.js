@@ -109,8 +109,11 @@ export default function VideoUpload({
   };
 
   return (
-    <div className="p-10">
-      <div className="p-16 text-left">
+    <div className="p-6">
+       <h2 className="font-extrabold text-base text-[#0069D9] p-4 text-center">
+          VIDEO & BANNER IMAGE UPLOAD
+        </h2>
+      <div className="text-left mt-2">
         <div className="max-w-2xl mx-auto p-6 border-2 border-[#0069D9] rounded text-[#0069D9] space-y-6">
           {/* Video Upload Section */}
           <div>

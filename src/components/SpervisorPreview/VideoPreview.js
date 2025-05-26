@@ -159,7 +159,7 @@ export default function VideoPreview({
   };
 
  return (
-  <div className="p-4 pb-24">
+  <div className="">
     {/* Show animation overlay when both videoPath and bannerPath are missing */}
     {!videoPath && !bannerPath ? (
       <div className="fixed inset-0 flex items-center justify-center bg-gray-100">
@@ -176,22 +176,22 @@ export default function VideoPreview({
         </div>
       </div>
     ) : (
-      <div className="max-w-2xl mx-auto p-4">
+      <div className="max-w-2xl mx-auto">
         <Link href="/supervisorportal/Review">
           <button className="border-2 rounded-lg text-md font-semibold py-1 px-4 border-[#0069D9] text-[#0069D9] bg-white hover:bg-[#0069D9] hover:text-white">
             Back
           </button>
         </Link>
 
-        <h3 className="text-lg font-extrabold text-[#0069D9] text-center mt-4">
-          video Preview
+        <h3 className="text-lg font-extrabold text-[#0069D9] text-center ">
+          VIDEO URL & BANNER IMAGE PREVIEW
         </h3>
 
         <div className="space-y-4 mt-4">
           {/* video Section */}
           <div className="border-2 border-[#0069D9] p-6 rounded-lg">
             <label className="block font-bold mb-2 text-[#0069D9] text-base">
-              Demo video
+              Demo Video
             </label>
             {videoPath && getVideoId(videoPath) ? (
               <>
@@ -224,14 +224,14 @@ export default function VideoPreview({
             <div className="flex justify-end space-x-4">
               <button
                 onClick={() => handleApproval("video")}
-                className="bg-green-500 text-white p-3 rounded-full hover:bg-green-600"
+                className="bg-green-500  p-3 rounded-full hover:bg-green-600"
                 title="Approve video"
               >
-                ✅
+                ✔️
               </button>
               <button
                 onClick={() => openRejectionModal("video")}
-                className="bg-red-500 text-white p-3 rounded-full hover:bg-red-600"
+                className="bg-red-500  p-3 rounded-full hover:bg-red-600"
                 title="Reject video"
               >
                 ❌
@@ -248,7 +248,7 @@ export default function VideoPreview({
           {/* Banner Section */}
           <div className="border-2 border-[#0069D9] p-6 rounded-lg">
             <label className="block font-bold text-[#0069D9] text-base mb-2">
-              banner
+             Banner Image
             </label>
             {bannerPath ? (
               <>
@@ -278,14 +278,14 @@ export default function VideoPreview({
             <div className="flex justify-end space-x-4">
               <button
                 onClick={() => handleApproval("banner")}
-                className="bg-green-500 text-white p-3 rounded-full hover:bg-green-600"
+                className="bg-green-500  p-3 rounded-full hover:bg-green-600"
                 title="Approve Banner"
               >
-                ✅
+            ✔️
               </button>
               <button
                 onClick={() => openRejectionModal("banner")}
-                className="bg-red-500 text-white p-3 rounded-full hover:bg-red-600"
+                className="bg-red-500 p-3 rounded-full hover:bg-red-600"
                 title="Reject Banner"
               >
                 ❌
@@ -313,10 +313,10 @@ export default function VideoPreview({
             ×
           </button>
           <div className="flex space-x-2 mb-4">
-            <p className="bg-gray-300 p-2 rounded-full text-sm font-bold text-[#0069D9]">
+            <p className="bg-gray-300 p-2 rounded-lg text-sm font-bold text-[#0069D9] capitalize">
               {rejectionType}
             </p>
-            <p className="bg-gray-300 p-2 rounded-full text-sm font-bold text-[#0069D9] capitalize">
+            <p className="bg-gray-300 p-2 rounded-lg text-sm font-bold text-[#0069D9] capitalize">
               {rollNumber}
             </p>
           </div>

@@ -53,9 +53,7 @@ export default async function handler(req, res) {
               userName,
               userRole,
               rejectedPoints,
-              optionalMessage: optionalMessage || 
-                `${userName} (${rollNumber}) submitted ${type} with rejected points. ` +
-                `Please check your ${type} submission as you're part of the same project group.`
+              optionalMessage: optionalMessage 
             });
             await memberNotification.save();
           }

@@ -1,6 +1,6 @@
 // components/Director_departments/ComputerScienceProjects.js
 import React, { useEffect, useState } from 'react';
-import ProjectsTable from '../HODCard/ProjectsTable';
+import ProjectsTable from '../../components/Director_departments/ProjectsTable';
 
 const SoftwareEngineeringProjects = ({ token }) => {
   const [projects, setProjects] = useState([]);
@@ -10,7 +10,7 @@ const SoftwareEngineeringProjects = ({ token }) => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await fetch('/api/director/getProjectsByDepartment?department=Computer Science', {
+        const response = await fetch('/api/director/getProjectsByDepartment?department=Software Engineering', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         

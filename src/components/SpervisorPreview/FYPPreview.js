@@ -174,8 +174,8 @@ export default function FYPPreview({
           </div>
         </div>
       ) : (
-        <div className="max-w-2xl mx-auto p-4">
-          <div className="bg-gray-100 rounded-lg p-6 space-y-4">
+        <div className="max-w-2xl mx-auto p-4 ">
+          <div className="bg-gray-100 rounded-lg p-6 space-y-4 border-2 border-[#0069D9]">
             <h3 className="text-base font-semibold text-[#0069D9]">
               Click the download button to preview the document
             </h3>
@@ -226,12 +226,12 @@ export default function FYPPreview({
             </button>
             <div className="flex space-x-2">
               <div className="">
-                <p className="mb-2 text-[#0069D9] bg-gray-300 rounded-full p-2 text-sm font-bold">
+                <p className="mb-2 text-[#0069D9] bg-gray-300 rounded-lg p-2 text-sm font-bold">
                   Fyp
                 </p>
               </div>
               <div>
-                <p className="mb-4 text-[#0069D9] bg-gray-300 rounded-full p-2 text-sm font-bold capitalize">
+                <p className="mb-4 text-[#0069D9] bg-gray-300 rounded-lg p-2 text-sm font-bold capitalize">
                   {rollNumber}
                 </p>
               </div>

@@ -1,8 +1,9 @@
 import Link from "next/link";
 import Layout from "../../components/layouts/Layout";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import StudentNotification from "../../components/Notification/StudentNotification";
 import jwt from "jsonwebtoken"; // Import jsonwebtoken
+import axios from "axios";
 
 export async function getServerSideProps({ req }) {
   const token = req.cookies.token;
@@ -40,15 +41,32 @@ export async function getServerSideProps({ req }) {
 
 function Index({ token, userData }) {
   console.log("dadta user ka", userData);
-  const [showUpload, setShowUpload] = useState(true); // State to toggle between upload and notification
+  const [showUpload, setShowUpload] = useState(true);
+  const [notificationCount, setNotificationCount] = useState(0);
 
+  useEffect(() => {
+    const fetchNotificationCount = async () => {
+      try {
+        const response = await axios.get(
+          `/api/Notification/FetchNotification?userId=${userData.id}&role=student`
+        );
+        setNotificationCount(response.data.notifications.length);
+      } catch (error) {
+        console.error("Error fetching notifications:", error);
+      }
+    };
+
+    if (userData?.id) {
+      fetchNotificationCount();
+    }
+  }, [userData?.id]);
   return (
     <Layout token={token}>
       <div className="container h-full w-full pb-10 mx-auto ">
         <div className=" flex w-9/12 min-w-lg mx-auto p-6 justify-between">
           <div className=" space-x-2">
             <button
-              onClick={() => setShowUpload(true)} // Show upload boxes
+              onClick={() => setShowUpload(true)}
               className={`border-2 rounded-lg text-md font-semibold py-1 px-2 ${
                 showUpload
                   ? "bg-[#0069D9] text-white border-[#0069D9]"
@@ -58,19 +76,25 @@ function Index({ token, userData }) {
               Upload
             </button>
             <button
-              onClick={() => setShowUpload(false)} // Show notification component
-              className={`border-2 rounded-lg text-md font-semibold py-1 px-2 ${
+              onClick={() => setShowUpload(false)}
+              className={`border-2 rounded-lg text-md font-semibold py-1 px-2 relative ${
                 !showUpload
                   ? "bg-[#0069D9] text-white border-[#0069D9]"
                   : "border-[#0069D9] text-[#0069D9] bg-white hover:bg-[#0069D9] hover:text-white hover:border-white"
               }`}
             >
               Notification
+              {/* Notification badge */}
+              {notificationCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  {notificationCount}
+                </span>
+              )}
             </button>
           </div>
           <div className="text-[#0069D9] text-md font-semibold flex space-x-2 justify-center items-center">
             <p className="bg-gray-300 rounded-lg py-1.5 px-2 capitalize">{userData.department}</p>
-            <p className="bg-gray-300 rounded-lg py-1.5 px-2 capitalize" >{userData.rollNumber}</p>
+            <p className="bg-gray-300 rounded-lg py-1.5 px-2 capitalize">{userData.rollNumber}</p>
           </div>
         </div>
 
@@ -232,7 +256,7 @@ function Index({ token, userData }) {
             </div>
           </div>
         ) : (
-          <StudentNotification userId={userData.id} /> // Render the Notification component
+          <StudentNotification userId={userData.id}   updateNotificationCount={setNotificationCount} /> // Render the Notification component
         )}
       </div>
     </Layout>

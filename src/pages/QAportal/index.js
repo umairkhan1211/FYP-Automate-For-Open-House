@@ -110,6 +110,7 @@ export default function Index({ token, department, userId }) {
     <Layout token={token}>
       <div className="pb-10 container mx-auto overflow-x-hidden">
         <div className="flex">
+          {/* Buttons container - EXACTLY as in your original code */}
           <div className="w-6/12 min-w-lg mx-auto p-6 space-x-2">
             <button
               onClick={() => setShowUpload(true)}
@@ -133,58 +134,60 @@ export default function Index({ token, department, userId }) {
             </button>
           </div>
 
-          {/* Search Bar with Suggestions */}
-          <div className="max-w-lg mx-auto py-4 text-[#0069D9] font-bold relative w-1/3 ">
-            <div className="relative flex items-center">
-              <input
-                type="text"
-                placeholder="Search projects..."
-                className="w-full py-3 px-6 pr-12 rounded-full border-2 border-gray-200 focus:border-[#0069D9] focus:outline-none shadow-lg transition-all duration-300"
-                value={searchTerm}
-                onChange={handleInputChange}
-                onKeyPress={handleKeyPress}
-              />
-              <button
-                onClick={handleSearch}
-                className="absolute right-2 bg-[#0069D9] text-white p-2 rounded-full hover:bg-[#0056b3] transition-all duration-300"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+          {/* Search bar - conditionally rendered but takes same space when hidden */}
+          <div className={`${showUpload ? "w-1/3" : "invisible w-1/3"}`}>
+            {showUpload && (
+              <div className="max-w-lg mx-auto py-4 px-10 text-[#0069D9] font-bold relative w-full">
+                <div className="relative flex items-center">
+                  <input
+                    type="text"
+                    placeholder="Search projects..."
+                    className="w-full text-sm py-3 px-6 pr-12 rounded-full border-2 border-gray-200 focus:border-[#0069D9] focus:outline-none shadow-lg transition-all duration-300"
+                    value={searchTerm}
+                    onChange={handleInputChange}
+                    onKeyPress={handleKeyPress}
                   />
-                </svg>
-              </button>
-            </div>
-
-            {/* Suggestions Dropdown */}
-            {suggestions.length > 0 && (
-              <ul
-                ref={suggestionBoxRef}
-                className="absolute z-10 w-full  bg-white shadow-lg rounded-md mt-2 max-h-60 overflow-y-auto border border-gray-200"
-              >
-                {suggestions.map((suggestion, i) => (
-                  <li
-                    key={i}
-                    onClick={() => handleSuggestionClick(suggestion)}
-                    className="px-4 py-2 cursor-pointer text-[#0069D9] hover:bg-gray-100 "
+                  <button
+                    onClick={handleSearch}
+                    className="absolute right-2 bg-[#0069D9] text-white p-2 rounded-full hover:bg-[#0056b3] transition-all duration-300"
                   >
-                    {suggestion.actual}
-                  </li>
-                ))}
-              </ul>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-6 w-6"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+
+                {suggestions.length > 0 && (
+                  <ul
+                    ref={suggestionBoxRef}
+                    className="absolute z-10 w-full bg-gray-100 shadow-lg rounded-md mt-2 max-h-60 overflow-y-auto border border-gray-200"
+                  >
+                    {suggestions.map((suggestion, i) => (
+                      <li
+                        key={i}
+                        onClick={() => handleSuggestionClick(suggestion)}
+                        className="px-4 py-2 cursor-pointer text-[#0069D9] hover:bg-gray-100"
+                      >
+                        {suggestion.actual}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             )}
           </div>
         </div>
-
         {showUpload ? (
           <div className="px-8 py-8">
             <Swiper
@@ -202,7 +205,7 @@ export default function Index({ token, department, userId }) {
                 depth: 150,
                 modifier: 2.5,
               }}
-              pagination={{ clickable: true }}
+              // pagination={{ clickable: true }}
               navigation
               onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}
               className="mySwiper"
@@ -260,7 +263,7 @@ export default function Index({ token, department, userId }) {
             </Swiper>
           </div>
         ) : (
-          <QAupload />
+          <QAupload userId={userId} />
         )}
       </div>
     </Layout>

@@ -16,20 +16,43 @@ export default async function handler(req, res) {
         optionalMessage = "",
       } = req.body;
 
-      // 1. Get the student's project title
+      // For CV type, only notify the student who uploaded the CV
+      if (type === "cv") {
+        const student = await User.findById(studentId);
+        if (!student) {
+          return res.status(404).json({ error: "Student not found" });
+        }
+
+        const notification = new Notification({
+          studentId,
+          supervisorId,
+          rollNumber,
+          type,
+          userRole,
+          rejectedPoints: ["FYP document was rejected by supervisor"],
+          optionalMessage
+        });
+
+        await notification.save();
+
+        return res.status(201).json({ 
+          message: "CV notification created for the student",
+          count: 1
+        });
+      }
+
+      // Original logic for other types (notifications for all group members)
       const student = await User.findById(studentId);
       if (!student) {
         return res.status(404).json({ error: "Student not found" });
       }
       const projectTitle = student.projectTitle;
 
-      // 2. Find all students in the same project group
       const groupMembers = await User.find({ 
         projectTitle,
         role: 'student'
       });
 
-      // 3. Create notifications for all group members
       const notificationPromises = groupMembers.map(async (member) => {
         const notification = new Notification({
           studentId: member._id,
